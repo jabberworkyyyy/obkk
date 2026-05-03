@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>咔咔吸炒菜评分榜 · 奥比托之家</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f0ede8;
+            --bg-card: #ffffff;
+            --bg-hover: #f5f3ef;
+            --text-primary: #3d3a36;
+            --text-secondary: #7a756e;
+            --text-light: #a09b94;
+            --border-color: #e0dcd4;
+            --star-color: #c4a35a;
+            --star-empty: #d8d4cc;
+            --accent-green: #8ba888;
+            --accent-red: #c97c7c;
+            --accent-blue: #7a9bb5;
+            --shadow: 0 2px 8px rgba(0,0,0,0.04);
+            --radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px 12px 40px;
+            max-width: 480px;
+            margin: 0 auto;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== 密码锁遮罩 ===== */
+        #password-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            padding: 20px;
+        }
+        #password-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .lock-box {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 32px 28px 28px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .lock-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .lock-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .lock-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .lock-input-wrap {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2px 2px 2px 14px;
+            transition: border-color 0.3s;
+        }
+        .lock-input-wrap:focus-within {
+            border-color: var(--accent-blue);
+        }
+        .lock-input-wrap input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 18px;
+            letter-spacing: 6px;
+            width: 160px;
+            padding: 10px 0;
+            font-family: inherit;
+        }
+        .lock-input-wrap input::placeholder {
+            color: var(--text-light);
+            letter-spacing: 1px;
+            font-size: 13px;
+        }
+        .lock-btn {
+            background: var(--text-primary);
+            border: none;
+            color: var(--bg-card);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .lock-btn:hover {
+            background: #2a2824;
+        }
+        .lock-btn:active {
+            transform: scale(0.97);
+        }
+        .lock-error {
+            font-size: 13px;
+            color: var(--accent-red);
+            margin-top: 12px;
+            min-height: 20px;
+            transition: all 0.3s;
+        }
+        .lock-error.shake {
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        /* ===== 五个带土介绍弹窗 ===== */
+        #reviewers-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #reviewers-overlay.active {
+            display: flex;
+        }
+
+        .reviewers-modal {
+            background: var(--bg-card);
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px 20px 20px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .reviewers-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .reviewers-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .reviewers-close {
+            font-size: 20px;
+            color: var(--text-light);
+            cursor: pointer;
+            line-height: 1;
+            background: none;
+            border: none;
+            padding: 0 4px;
+        }
+        .reviewers-close:hover {
+            color: var(--text-primary);
+        }
+
+        .reviewer-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .reviewer-row:last-child {
+            border-bottom: none;
+        }
+
+        .reviewer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .reviewer-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .reviewer-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .reviewer-style {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            line-height: 1.5;
+        }
+
+        /* ===== 列表页样式 ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 4px 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            font-size: 22px;
+            color: var(--text-primary);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .header-title {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .sub-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 4px 12px;
+        }
+
+        .sub-header-tabs {
+            display: flex;
+            gap: 20px;
+        }
+
+        .tab-item {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-item.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--text-primary);
+        }
+
+        .tab-item:hover {
+            color: var(--text-primary);
+        }
+
+        .filter-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .score-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .score-item {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            border: 1px solid transparent;
+        }
+
+        .score-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-color);
+        }
+
+        .score-item:active {
+            transform: scale(0.98);
+        }
+
+        .square-box {
+            width: 52px;
+            height: 52px;
+            background: #e8e4dc;
+            border-radius: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .square-box-inner {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .square-box .icon-text {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .item-desc {
+            flex: 1;
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            padding: 0 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .item-right {
+            flex-shrink: 0;
+            text-align: right;
+            min-width: 80px;
+        }
+
+        .item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .item-score {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .item-score .score-num {
+            font-size: 20px;
+        }
+
+        .item-score .score-total {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .item-stars {
+            display: flex;
+            gap: 1px;
+            justify-content: flex-end;
+            margin-top: 1px;
+        }
+
+        .star {
+            font-size: 11px;
+            color: var(--star-color);
+        }
+
+        .star.empty {
+            color: var(--star-empty);
+        }
+
+        /* ===== 详情页 ===== */
+        .detail-page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .detail-page.active {
+            display: block;
+        }
+
+        .list-page.hidden {
+            display: none;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 4px 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .detail-back {
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .detail-title {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .detail-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0 24px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+        }
+
+        .hero-square {
+            width: 72px;
+            height: 72px;
+            background: #e8e4dc;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .hero-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .hero-score {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .hero-score .hero-score-total {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .hero-review-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .hero-stars-row {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 14px;
+        }
+
+        .hero-star {
+            font-size: 20px;
+            color: var(--star-color);
+        }
+
+        .hero-star.empty {
+            color: var(--star-empty);
+        }
+
+        .star-distribution {
+            width: 100%;
+            max-width: 280px;
+            padding: 0 16px;
+        }
+
+        .star-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .star-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            width: 30px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .star-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: var(--star-empty);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .star-bar-fill {
+            height: 100%;
+            background: var(--star-color);
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        .star-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+            width: 24px;
+            text-align: left;
+            flex-shrink: 0;
+        }
+
+        .comments-section {
+            margin-top: 4px;
+        }
+
+        .comments-title {
+            font-size: 15px;
+            font-weight: 600;
+            padding: 12px 4px 8px;
+            color: var(--text-primary);
+        }
+
+        .comment-item {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .comment-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e0dcd4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .comment-username {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .comment-stars {
+            display: flex;
+            gap: 1px;
+        }
+
+        .comment-star {
+            font-size: 13px;
+            color: var(--star-color);
+        }
+
+        .comment-star.empty {
+            color: var(--star-empty);
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 20px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .comment-action {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 360px) {
+            .item-desc { font-size: 12px; }
+            .item-name { font-size: 12px; }
+            .item-score .score-num { font-size: 17px; }
+            .square-box { width: 44px; height: 44px; }
+            .lock-input-wrap input { width: 120px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 密码锁遮罩 ===== -->
+    <div id="password-overlay">
+        <div class="lock-box">
+            <span class="lock-icon">🔒</span>
+            <div class="lock-title">咔咔吸炒菜评分榜</div>
+            <div class="lock-sub">输入暗号以解锁全部内容</div>
+            <div class="lock-input-wrap">
+                <input type="password" id="password-input" placeholder="请输入密码" maxlength="10" autofocus>
+                <button class="lock-btn" id="password-btn">解锁</button>
+            </div>
+            <div class="lock-error" id="lock-error"></div>
+        </div>
+    </div>
+
+    <!-- ===== 五个带土介绍弹窗 ===== -->
+    <div id="reviewers-overlay">
+        <div class="reviewers-modal">
+            <div class="reviewers-header">
+                <h3>👥 五位热情评委</h3>
+                <button class="reviewers-close" id="reviewers-close-btn">✕</button>
+            </div>
+            <div class="reviewer-row">
+                <div class="reviewer-avatar" style="background:#c4a88a;">🐱</div>
+                <div class="reviewer-info">
+                    <div class="reviewer-name">仔土</div>
+                    <div class="reviewer-style">青涩、真诚、带着忐忑的珍视</div>
+                </div>
+            </div>
+            <div class="reviewer-row">
+                <div class="reviewer-avatar" style="background:#b8957a;">💅</div>
+                <div class="reviewer-info">
+                    <div class="reviewer-name">阿飞</div>
+                    <div class="reviewer-style">人家只是喜欢看前辈崩溃样子的女高中生啦</div>
+                </div>
+            </div>
+            <div class="reviewer-row">
+                <div class="reviewer-avatar" style="background:#8a7a8a;">🍆</div>
+                <div class="reviewer-info">
+                    <div class="reviewer-name">紫袍</div>
+                    <div class="reviewer-style">会享受卡卡西在性爱中自我惩罚的一面</div>
+                </div>
+            </div>
+            <div class="reviewer-row">
+                <div class="reviewer-avatar" style="background:#b57a6a;">😿</div>
+                <div class="reviewer-info">
+                    <div class="reviewer-name">暴怒小孩</div>
+                    <div class="reviewer-style">用愤怒掩盖渴望，想要让他幸福，却总是选了错误的选项</div>
+                </div>
+            </div>
+            <div class="reviewer-row">
+                <div class="reviewer-avatar" style="background:#8aa8a0;">💌</div>
+                <div class="reviewer-info">
+                    <div class="reviewer-name">战犯人夫</div>
+                    <div class="reviewer-style">温柔、细腻、带着赎罪和感恩的爱</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== LIST PAGE ===== -->
+    <div id="listPage" class="list-page">
+        <div class="header">
+            <div class="header-left">
+                <span class="back-btn">‹</span>
+                <span class="header-title">🍳 咔咔吸炒菜评分榜</span>
+            </div>
+            <div class="header-right">
+                <span class="header-icon">⋮</span>
+            </div>
+        </div>
+
+        <div class="sub-header">
+            <div class="sub-header-tabs">
+                <span class="tab-item active">综合排序</span>
+                <span class="tab-item" id="tab-top-rated">评分最高</span>
+                <span class="tab-item" id="tab-reviewers">评分人数</span>
+            </div>
+            <div class="filter-btn">筛选 ∨</div>
+        </div>
+
+        <div class="score-list" id="scoreList">
+            <!-- 由 JS 动态生成 -->
+        </div>
+    </div>
+
+    <!-- ===== DETAIL PAGE ===== -->
+    <div id="detailPage" class="detail-page">
+        <div class="detail-header">
+            <span class="detail-back" id="detailBack">‹</span>
+            <span class="detail-title" id="detailTitle">详情</span>
+        </div>
+
+        <div class="detail-hero" id="detailHero">
+            <div class="hero-square" id="heroSquare">🐕‍🦺</div>
+            <div class="hero-name" id="heroName">仔卡</div>
+            <div class="hero-score">
+                <span class="hero-score-num" id="heroScoreNum">9.2</span>
+                <span class="hero-score-total">/10</span>
+            </div>
+            <div class="hero-review-count" id="heroReviewCount">共 5 条评分</div>
+            <div class="hero-stars-row" id="heroStarsRow"></div>
+            <div class="star-distribution" id="starDistribution"></div>
+        </div>
+
+        <div class="comments-section">
+            <div class="comments-title">评分详情</div>
+            <div id="commentsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // 数据：四个时期的卡卡西 × 五位带土的锐评
+        // =============================================
+        var kakashiData = [
+            {
+                id: 'child',
+                name: '仔卡',
+                icon: '🐕‍🦺',
+                desc: '处女嫩批 请小心使用',
+                score: 6.4,
+                comments: [
+                    {
+                        user: '圈圈面具怪人',
+                        avatar: '💅',
+                        stars: 3,
+                        text: '呀——！小前辈也太可爱了吧！！竟然还穿着小狗印花的内裤，快点让阿飞看看小前辈的批！？呜哇——真的好小！！好粉！！好嫩！！阿飞用手指摸到那颗小阴蒂的时候前辈整个人都在抖～超可爱！！不过讲真的——前辈这个批太小了啦！！阿飞的鸡巴可能连龟头都塞不进去！！这样的话怎么能爽呢？只能给小前辈打不及格的分数了。'
+                    },
+                    {
+                        user: '红月大计吧',
+                        avatar: '🍆',
+                        stars: 2,
+                        text: '我不想碰这个时候的卡卡西，当然不是因为不忍心，只是觉得没意思罢了。喔，忘记了，他那对奶子倒是可以把玩一下，这样说不定等长大了手感会变得更好。如果真的要我插进去的话，我会等他再长大一点。'
+                    },
+                    {
+                       user: '这一切都是错误的',
+avatar: ' 😿 ',
+stars: 4,
+text: '我对小孩子没有兴趣。不过，在我复建最艰难的时候，我曾梦到过眼睛还没有受伤时候的他。在梦里，我把卡卡西按在地上，撕开他的衣服，他的下面粉粉的、嫩嫩的，还没被人开过苞。我在梦里操了他，看他再也维持不了那副高高在上的样子，卡卡西哭了，一直在尖叫，说「好痛、带土、好痛——」但我没有停下来。我为什么要停下来？这一切都是因为他活该。'
+},
+{
+user: '一般路过家庭煮夫',
+avatar: '💌',
+stars: 5,
+text: '虽然已经是厉害的上忍了，但这个时候的卡卡西其实还是一个小朋友，睡着的时候会无意识地往我怀里钻。他的阴蒂非常小，我用舌尖去找它的时候，卡卡西一直在发抖。找到之后我只是轻轻吮了一下，让他发出了一声很小的、像小动物一样的叫声，然后他就紧紧捂住自己的嘴，再也不肯出声了。不过后来，我并没有操他，只是把他抱在怀里。我知道他以后会遇到很多痛苦的事情，但我希望在那个时候，他仍然能知道自己是被深爱着的。'
+},
+{
+user: '木叶热心小学生',
+avatar: '🐱',
+stars: 2,
+text: '你们都在说什么啊？这到底是什么论坛？不许对卡卡西做奇怪的事情！'
+}
+]
+},
+{
+id: 'anbu',
+name: '暗部卡',
+icon: '🐾',
+desc: '暗部脏脏小狗的批里总是含着精液',
+score: 8.0,
+comments: [
+{
+user: '圈圈面具怪人',
+avatar: '💅',
+stars: 5,
+text: '呜哇——暗部时期的卡卡西前辈看起来好凶、好冷淡、好难搞的样子——但是阿飞知道的哦！阿飞知道的！这个时候的卡卡西其实超级寂寞的！还有一口薄薄的小屄，明明形状那么完美，颜色的那么漂亮，结果从来没有人碰过它！没有人夸过它好看！还有前辈的乳头，和小屄一样敏感却不知道怎么样快乐。不过没关系，阿飞来教前辈呀，就用手指来给前辈破处吧！喔，是在因为没有吃到喜欢的人的鸡巴而流泪吗？'
+},
+{
+user: '红月大计吧',
+avatar: '🍆',
+stars: 5,
+text: '我见过他洗完澡后对着镜子发呆的样子，他会盯着自己左眼的伤疤看很久，然后用指腹在那里来回抚摸。那个动作让我很烦躁。非常烦躁。我第一次操他的时候，这家伙已经不是处女了……不过里面还是紧的要命。我的动作从来都算不上温柔，不过他也不会反抗，因为这个时候的他对疼痛简直是甘之若饴，因此我最喜欢操的便是这一个卡卡西了。每一次见面我都会射在他里面，不允许他做清理，只能含着我精液离开，去执行下一个任务。'
+},
+{
+user: '这一切都是错误的',
+avatar: ' 😿 ',
+stars: 1,
+text: '我本来打算把他摁在那个废物的慰灵碑上操他，然而他一直在喊一个不存在的人的名字，这实在是让我兴致全无。于是我就把被剥光衣服的暗部丢在那里了。我离开的时候看到一个带着橙色面具的家伙从旋涡里出现，那家伙看上去可不像什么善茬——不过，无所谓了。'
+},
+{
+user: '一般路过家庭煮夫',
+avatar: '💌',
+stars: 5,
+text: '我捡到了一只脏脏的暗部小狗，不知道是被谁欺负狠了，浑身上下都是被人使用过的痕迹。可能是因为没有经历过温柔的性爱吧，我在给他舔穴的时候，他总是一副受不了的样子想把我推开。我一边亲他的阴蒂，一边揉他的乳头，告诉他没事的卡卡西，可以感到舒服的，不需要再愧疚了……然后他便翻着白眼高潮了。'
+},
+{
+user: '木叶热心小学生',
+avatar: '🐱',
+stars: 5,
+text: '卡卡西太瘦了，脸色也太差了，整个人像是随时会消失一样。他看到我的时候一直在流眼泪，朝我伸手要我抱着他。虽然不知道为什么卡卡西会变成这样，但是我还是抱住他了，我想让他先好好睡一觉。至少那天晚上，他不会再失眠了。'
+}
+]
+},
+{
+id: 'jonin',
+name: '上忍卡',
+icon: '🦘',
+desc: '在床上是有点害羞但很配合的类型',
+score: 7.6,
+comments: [
+{
+user: '圈圈面具怪人',
+avatar: '💅',
+stars: 4,
+text: '这个时候前辈的屁股超级好摸！！又圆又翘，肉又多，捏起来的手感超绝。表面上是温柔可靠的精英上忍，其实每次见面之后都会找机会出来和敌人偷情。 「前辈，你说你的学生们要是看到他们敬爱的卡卡西老师——现在正撅着屁股被一个戴面具的怪人操，他们会怎么想呢？」这句话一说出口，那口嫩批就会猛地绞紧——然后高潮。阿飞屡试不爽。'
+},
+{
+user: '红月大计吧',
+avatar: '🍆',
+stars: 5,
+text: '我会把他抓到神威空间里操，一开始他好像很不情愿的样子，不过看到我脸之后立马又变乖了，批也变热情了，不停地嘬着含着的东西——最敏感的地方当然是阴蒂，已经是被好好开发过的身体，稍微揉一揉阴蒂就会出水，顶到子宫口会爽得脚趾蜷缩、叫出来的声音也会不受控制地拔高。就这么操下去的话，就会完全忘记自己的职责，心甘情愿被战场上的敌人当成性爱玩具吧。'
+},
+{
+user: '这一切都是错误的',
+avatar: ' 😿 ',
+stars: 1,
+text: '为什么他可以笑得那么轻松，带几个小鬼做做低级任务，一直在看那种低俗的书籍，去慰灵碑前站一站装装深情，或者一副温顺的样子跪着吃我的鸡巴——以为这样就能弥补了吗！？你这个赝品！冒牌货！'
+},
+{
+user: '一般路过家庭煮夫',
+avatar: '💌',
+stars: 5,
+text: '上忍的阴唇比起暗部要更肥厚一些，颜色也更深了，是肉红色的，掰开来能看到里面湿润的嫩肉。不知道为什么，和上忍做的时候他不太敢看我的眼睛，于是我就去问他，为什么总是不敢看我？卡卡西回答说，因为太幸福了，如果这个时候看到你的眼睛，发现这不过是一场幻术该怎么办呢。……唉，他担心的事情，竟然和我是如此的相似。'
+},
+{
+user: '木叶热心小学生',
+avatar: '🐱',
+stars: 4,
+text: '我、我们已经做过很多次了！但我还是每次都会紧张！他的批是肉红色的、湿漉漉的，不管什么时候都是那么紧那么热，然后我就会忍不住射出来……呜呜，这种喜欢看小黄书的不良教师到底哪里好啦！'
+}
+]
+},
+{
+id: 'hokage',
+name: '六火',
+icon: '🦭',
+desc: '全身都是敏感带 超绝熟妇',
+score: 10.0,
+comments: [
+{
+user: '圈圈面具怪人',
+avatar: '💅',
+stars: 5,
+text: '完全就是一口被人操烂了的骚肥逼！阴唇的颜色那么深，外翻得那么厉害，阿飞每次看到都会忍不住吞口水，毕竟一看就是被操了好多年的极品熟批！阴唇肥肥的、软软的，颜色是熟透的深红色，像一颗被掰开的无花果。阴蒂那么大一颗凸在外面，光是用内裤边缘蹭一蹭就会爽得流水吧？六代目大人的奶子也好棒，又大又软，乳晕的颜色好深。如果阿飞一边操批一边揉奶子，火影大人就会舒服得连舌头都收不回去，涎水顺着嘴角往下流，嘴里含含糊糊地叫着「带土、带土——」，子宫也被操得位置都有些降下来了，被灌精时候的高潮脸实在是太色啦——'
+},
+{
+user: '红月大计吧',
+avatar: '🍆',
+stars: 5,
+text: '唔，看上去被那个没用的废物辛勤耕耘了很久嘛？火影大人全身都是敏感带，我喜欢玩他的乳头——被操了那么多次，乳头已经被嘬得又大又敏感，想必光是穿袍子摩擦到就会硬挺吧？哦，这个时候的卡卡西尿道口也被玩得很开，被抠两下就会失禁。不过，也要感谢那个废物战犯，现在的卡卡西胖了一些，小肚子软软的，大腿和屁股也变得圆润丰腴，整个人都在散发着被好好爱过、被好好操过的幸福气息。虽然月之眼失败了，但变成这样的结局，好像也不算差。'
+},
+{
+user: '这一切都是错误的',
+avatar: ' 😿 ',
+stars: 5,
+text: '明明我是那个伤害他最深的人，可他仍然紧紧抱着我，眉眼弯弯，恳请我不要离开。我去吃他的奶子，揉他下面还在滴水的屄，羞辱他说火影大人为了能自己爽甚至连我这种罪大恶极的烦人都不放过。卡卡西低下头来与我接吻，他身上的味道很香，他说，「是的，我想要带土，所以插进来吧。」——其实他只是被情欲冲昏了头，只想摇着屁股吃到心心念念的鸡巴罢了。我就是这样被他哄骗，但我心甘情愿。'
+},
+{
+user: '一般路过家庭煮夫',
+avatar: '💌',
+stars: 5,
+text: '我们现在的性爱很频繁，为什么？因为卡卡西就是很喜欢做爱啊……我也只好满足他。他当了火影之后压力大，有时候加班到很晚才回来。回来之后也不说话，那口肥批就直接坐到我身上开始来来回回的蹭，水多到会顺着我的大腿根往下流，把沙发坐垫弄湿一大片。我会抱着他的腰帮他调整节奏，在他耳边说「今天辛苦了」。他会把脸埋在我的颈窝里，闷闷地「嗯」一声，然后咬我的肩膀。……我真的很幸福。能和他一起变老、一起做爱、一起在早晨醒来——这是我以前想都不敢想的事。'
+},
+{
+user: '木叶热心小学生',
+avatar: '🐱',
+stars: 5,
+text: '啊啊啊！这是哪里来的白色大肥海豹——卡卡西的胸肌摸起来怎么是又软又绵的，简直像两团饱满的乳房！他的乳晕也好大，颜色好深，嘬起来真的很香甜。不要啦卡卡西——救命——已经什么都吸不出来啦——'
+}
+]
+}
+];
+
+// =============================================
+// 密码验证逻辑
+// =============================================
+var passwordOverlay = document.getElementById('password-overlay');
+var passwordInput = document.getElementById('password-input');
+var passwordBtn = document.getElementById('password-btn');
+var lockError = document.getElementById('lock-error');
+
+var CORRECT_PASSWORD = '210915';
+
+function unlockPage() {
+passwordOverlay.classList.add('hidden');
+lockError.textContent = '';
+}
+
+function handlePassword() {
+var val = passwordInput.value.trim();
+if (val === CORRECT_PASSWORD) {
+unlockPage();
+} else {
+lockError.textContent = '密码错误，请重试';
+lockError.classList.remove('shake');
+void lockError.offsetWidth;
+lockError.classList.add('shake');
+passwordInput.value = '';
+passwordInput.focus();
+}
+}
+
+passwordBtn.addEventListener('click', handlePassword);
+passwordInput.addEventListener('keydown', function(e) {
+if (e.key === 'Enter') {
+handlePassword();
+}
+});
+
+// =============================================
+// 评分最高 → 跳转到六火详情
+// =============================================
+document.getElementById('tab-top-rated').addEventListener('click', function() {
+var hokageData = null;
+for (var i = 0; i < kakashiData.length; i++) {
+if (kakashiData[i].id === 'hokage') {
+hokageData = kakashiData[i];
+break;
+}
+}
+if (hokageData) {
+openDetail(hokageData);
+}
+});
+
+// =============================================
+// 评分人数 → 打开五个带土介绍弹窗
+// =============================================
+document.getElementById('tab-reviewers').addEventListener('click', function() {
+document.getElementById('reviewers-overlay').classList.add('active');
+});
+
+document.getElementById('reviewers-close-btn').addEventListener('click', function() {
+document.getElementById('reviewers-overlay').classList.remove('active');
+});
+
+document.getElementById('reviewers-overlay').addEventListener('click', function(e) {
+if (e.target === this) {
+this.classList.remove('active');
+}
+});
+
+// =============================================
+// 渲染列表
+// =============================================
+function renderList() {
+var list = document.getElementById('scoreList');
+list.innerHTML = '';
+for (var i = 0; i < kakashiData.length; i++) {
+var item = kakashiData[i];
+var totalStars = 5;
+var fullStars = Math.floor(item.score / 2);
+var halfStar = (item.score / 2) % 1 >= 0.25;
+var emptyStars = totalStars - fullStars - (halfStar ? 1 : 0);
+
+var starsHtml = '';
+for (var j = 0; j < fullStars; j++) {
+starsHtml += '<span class="star">★</span>';
+}
+if (halfStar) {
+starsHtml += '<span class="star">★</span>';
+}
+for (var k = 0; k < emptyStars; k++) {
+starsHtml += '<span class="star empty">★</span>';
+}
+
+var scoreItem = document.createElement('div');
+scoreItem.className = 'score-item';
+
+(function(data) {
+scoreItem.addEventListener('click', function() {
+openDetail(data);
+});
+})(item);
+
+scoreItem.innerHTML = '<div class="square-box">' +
+'<div class="square-box-inner">' +
+'<span class="icon-text">' + item.icon.trim() + '</span>' +
+'</div>' +
+'</div>' +
+'<div class="item-desc">' + item.desc + '</div>' +
+'<div class="item-right">' +
+'<div class="item-name">' + item.name + '</div>' +
+'<div class="item-score">' +
+'<span class="score-num">' + item.score + '</span>' +
+'<span class="score-total">/10</span>' +
+'</div>' +
+'<div class="item-stars">' + starsHtml + '</div>' +
+'</div>';
+
+list.appendChild(scoreItem);
+}
+}
+
+// =============================================
+// 打开详情页
+// =============================================
+function openDetail(item) {
+document.getElementById('listPage').classList.add('hidden');
+var detailPage = document.getElementById('detailPage');
+detailPage.classList.add('active');
+
+document.getElementById('detailTitle').textContent = item.name;
+document.getElementById('heroSquare').textContent = item.icon;
+document.getElementById('heroName').textContent = item.name;
+document.getElementById('heroScoreNum').textContent = item.score;
+document.getElementById('heroReviewCount').textContent = '共 ' + item.comments.length + ' 条评分';
+
+var totalStars = 5;
+var fullStars = Math.floor(item.score / 2);
+var halfStar = (item.score / 2) % 1 >= 0.25;
+var emptyStars = totalStars - fullStars - (halfStar ? 1 : 0);
+var heroStarsHtml = '';
+for (var i = 0; i < fullStars; i++) {
+heroStarsHtml += '<span class="hero-star">★</span>';
+}
+if (halfStar) {
+heroStarsHtml += '<span class="hero-star">★</span>';
+}
+for (var j = 0; j < emptyStars; j++) {
+heroStarsHtml += '<span class="hero-star empty">★</span>';
+}
+document.getElementById('heroStarsRow').innerHTML = heroStarsHtml;
+
+var distContainer = document.getElementById('starDistribution');
+var starCounts = [0, 0, 0, 0, 0];
+for (var k = 0; k < item.comments.length; k++) {
+var s = Math.round(item.comments[k].stars);
+if (s >= 1 && s <= 5) {
+starCounts[s - 1]++;
+}
+}
+var distHtml = '';
+for (var m = 5; m >= 1; m--) {
+var count = starCounts[m - 1] || 0;
+var pct = item.comments.length > 0 ? (count / item.comments.length * 100) : 0;
+distHtml += '<div class="star-row">' +
+'<span class="star-label">' + m + '星</span>' +
+'<div class="star-bar-bg">' +
+'<div class="star-bar-fill" style="width:' + pct + '%"></div>' +
+'</div>' +
+'<span class="star-count">' + count + '</span>' +
+'</div>';
+}
+distContainer.innerHTML = distHtml;
+
+var commentsContainer = document.getElementById('commentsList');
+commentsContainer.innerHTML = '';
+for (var n = 0; n < item.comments.length; n++) {
+var c = item.comments[n];
+var commentStarsHtml = '';
+for (var p = 0; p < 5; p++) {
+if (p < c.stars) {
+commentStarsHtml += '<span class="comment-star">★</span>';
+} else {
+commentStarsHtml += '<span class="comment-star empty">★</span>';
+}
+}
+var commentItem = document.createElement('div');
+commentItem.className = 'comment-item';
+commentItem.innerHTML = '<div class="comment-header">' +
+'<div class="comment-user">' +
+'<div class="comment-avatar">' + c.avatar + '</div>' +
+'<span class="comment-username">' + c.user + '</span>' +
+'</div>' +
+'<div class="comment-stars">' + commentStarsHtml + '</div>' +
+'</div>' +
+'<div class="comment-text">' + c.text + '</div>' +
+'<div class="comment-actions">' +
+'<span class="comment-action">👍 ' + (Math.floor(Math.random() * 20) + 5) + '</span>' +
+'<span class="comment-action">💬 回复</span>' +
+'<span class="comment-action">🔗 分享</span>' +
+'</div>';
+commentsContainer.appendChild(commentItem);
+}
+
+window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =============================================
+// 返回列表
+// =============================================
+document.getElementById('detailBack').addEventListener('click', function() {
+document.getElementById('detailPage').classList.remove('active');
+document.getElementById('listPage').classList.remove('hidden');
+window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// =============================================
+// 初始化
+// =============================================
+renderList();
+console.log('🍳 咔咔吸炒菜评分榜已加载');
+console.log('🔒 输入密码 210915 解锁全部内容');
+</script>
+
+</body>
+</html>
