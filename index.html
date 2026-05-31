@@ -1,842 +1,169 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>咔咔吸炒菜评分榜 · 奥比托之家</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --bg-primary: #f0ede8;
-            --bg-card: #ffffff;
-            --bg-hover: #f5f3ef;
-            --text-primary: #3d3a36;
-            --text-secondary: #7a756e;
-            --text-light: #a09b94;
-            --border-color: #e0dcd4;
-            --star-color: #c4a35a;
-            --star-empty: #d8d4cc;
-            --accent-green: #8ba888;
-            --accent-red: #c97c7c;
-            --accent-blue: #7a9bb5;
-            --shadow: 0 2px 8px rgba(0,0,0,0.04);
-            --radius: 12px;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding: 16px 12px 40px;
-            max-width: 480px;
-            margin: 0 auto;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ===== 密码锁遮罩 ===== */
-        #password-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: var(--bg-primary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
-            padding: 20px;
-        }
-        #password-overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        .lock-box {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 32px 28px 28px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            max-width: 340px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid var(--border-color);
-        }
-
-        .lock-icon {
-            font-size: 40px;
-            margin-bottom: 12px;
-            display: block;
-        }
-
-        .lock-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-        }
-
-        .lock-sub {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
-
-        .lock-input-wrap {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 2px 2px 2px 14px;
-            transition: border-color 0.3s;
-        }
-        .lock-input-wrap:focus-within {
-            border-color: var(--accent-blue);
-        }
-        .lock-input-wrap input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-primary);
-            font-size: 18px;
-            letter-spacing: 6px;
-            width: 160px;
-            padding: 10px 0;
-            font-family: inherit;
-        }
-        .lock-input-wrap input::placeholder {
-            color: var(--text-light);
-            letter-spacing: 1px;
-            font-size: 13px;
-        }
-        .lock-btn {
-            background: var(--text-primary);
-            border: none;
-            color: var(--bg-card);
-            font-size: 14px;
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-        .lock-btn:hover {
-            background: #2a2824;
-        }
-        .lock-btn:active {
-            transform: scale(0.97);
-        }
-        .lock-error {
-            font-size: 13px;
-            color: var(--accent-red);
-            margin-top: 12px;
-            min-height: 20px;
-            transition: all 0.3s;
-        }
-        .lock-error.shake {
-            animation: shake 0.4s ease;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-6px); }
-            40% { transform: translateX(6px); }
-            60% { transform: translateX(-4px); }
-            80% { transform: translateX(4px); }
-        }
-
-        /* ===== 五个带土介绍弹窗 ===== */
-        #reviewers-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        #reviewers-overlay.active {
-            display: flex;
-        }
-
-        .reviewers-modal {
-            background: var(--bg-card);
-            border-radius: 16px;
-            max-width: 400px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            padding: 24px 20px 20px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
-            animation: modalIn 0.3s ease;
-        }
-        @keyframes modalIn {
-            from { opacity: 0; transform: translateY(12px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .reviewers-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .reviewers-header h3 {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .reviewers-close {
-            font-size: 20px;
-            color: var(--text-light);
-            cursor: pointer;
-            line-height: 1;
-            background: none;
-            border: none;
-            padding: 0 4px;
-        }
-        .reviewers-close:hover {
-            color: var(--text-primary);
-        }
-
-        .reviewer-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .reviewer-row:last-child {
-            border-bottom: none;
-        }
-
-        .reviewer-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-            color: #fff;
-            font-weight: 600;
-        }
-
-        .reviewer-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .reviewer-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .reviewer-style {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-            line-height: 1.5;
-        }
-
-        /* ===== 列表页样式 ===== */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 4px 16px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 12px;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .back-btn {
-            font-size: 22px;
-            color: var(--text-primary);
-            cursor: pointer;
-            line-height: 1;
-        }
-
-        .header-title {
-            font-size: 17px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .header-icon {
-            font-size: 20px;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-
-        .sub-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 4px 12px;
-        }
-
-        .sub-header-tabs {
-            display: flex;
-            gap: 20px;
-        }
-
-        .tab-item {
-            font-size: 14px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            cursor: pointer;
-            padding-bottom: 4px;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .tab-item.active {
-            color: var(--text-primary);
-            border-bottom-color: var(--text-primary);
-        }
-
-        .tab-item:hover {
-            color: var(--text-primary);
-        }
-
-        .filter-btn {
-            font-size: 13px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-        }
-
-        .score-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .score-item {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow);
-            border: 1px solid transparent;
-        }
-
-        .score-item:hover {
-            background: var(--bg-hover);
-            border-color: var(--border-color);
-        }
-
-        .score-item:active {
-            transform: scale(0.98);
-        }
-
-        .square-box {
-            width: 52px;
-            height: 52px;
-            background: #e8e4dc;
-            border-radius: 8px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: var(--text-secondary);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .square-box-inner {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .square-box .icon-text {
-            font-size: 28px;
-            line-height: 1;
-        }
-
-        .item-desc {
-            flex: 1;
-            text-align: center;
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text-primary);
-            line-height: 1.4;
-            padding: 0 4px;
-            letter-spacing: 0.3px;
-        }
-
-        .item-right {
-            flex-shrink: 0;
-            text-align: right;
-            min-width: 80px;
-        }
-
-        .item-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 2px;
-        }
-
-        .item-score {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1.2;
-        }
-
-        .item-score .score-num {
-            font-size: 20px;
-        }
-
-        .item-score .score-total {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-
-        .item-stars {
-            display: flex;
-            gap: 1px;
-            justify-content: flex-end;
-            margin-top: 1px;
-        }
-
-        .star {
-            font-size: 11px;
-            color: var(--star-color);
-        }
-
-        .star.empty {
-            color: var(--star-empty);
-        }
-
-        /* ===== 详情页 ===== */
-        .detail-page {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .detail-page.active {
-            display: block;
-        }
-
-        .list-page.hidden {
-            display: none;
-        }
-
-        .detail-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 4px 16px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 16px;
-        }
-
-        .detail-back {
-            font-size: 22px;
-            cursor: pointer;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
-        .detail-title {
-            font-size: 17px;
-            font-weight: 700;
-        }
-
-        .detail-hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0 24px;
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            margin-bottom: 12px;
-        }
-
-        .hero-square {
-            width: 72px;
-            height: 72px;
-            background: #e8e4dc;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            margin-bottom: 12px;
-        }
-
-        .hero-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .hero-score {
-            font-size: 36px;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 2px;
-        }
-
-        .hero-score .hero-score-total {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-
-        .hero-review-count {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-        }
-
-        .hero-stars-row {
-            display: flex;
-            gap: 3px;
-            margin-bottom: 14px;
-        }
-
-        .hero-star {
-            font-size: 20px;
-            color: var(--star-color);
-        }
-
-        .hero-star.empty {
-            color: var(--star-empty);
-        }
-
-        .star-distribution {
-            width: 100%;
-            max-width: 280px;
-            padding: 0 16px;
-        }
-
-        .star-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-
-        .star-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            width: 30px;
-            text-align: right;
-            flex-shrink: 0;
-        }
-
-        .star-bar-bg {
-            flex: 1;
-            height: 6px;
-            background: var(--star-empty);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .star-bar-fill {
-            height: 100%;
-            background: var(--star-color);
-            border-radius: 3px;
-            transition: width 0.6s ease;
-        }
-
-        .star-count {
-            font-size: 12px;
-            color: var(--text-secondary);
-            width: 24px;
-            text-align: left;
-            flex-shrink: 0;
-        }
-
-        .comments-section {
-            margin-top: 4px;
-        }
-
-        .comments-title {
-            font-size: 15px;
-            font-weight: 600;
-            padding: 12px 4px 8px;
-            color: var(--text-primary);
-        }
-
-        .comment-item {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 14px 16px;
-            margin-bottom: 8px;
-            box-shadow: var(--shadow);
-        }
-
-        .comment-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-
-        .comment-user {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .comment-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: #e0dcd4;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .comment-username {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .comment-stars {
-            display: flex;
-            gap: 1px;
-        }
-
-        .comment-star {
-            font-size: 13px;
-            color: var(--star-color);
-        }
-
-        .comment-star.empty {
-            color: var(--star-empty);
-        }
-
-        .comment-text {
-            font-size: 14px;
-            line-height: 1.7;
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-
-        .comment-actions {
-            display: flex;
-            gap: 20px;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .comment-action {
-            font-size: 12px;
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-        }
-
-        @media (max-width: 360px) {
-            .item-desc { font-size: 12px; }
-            .item-name { font-size: 12px; }
-            .item-score .score-num { font-size: 17px; }
-            .square-box { width: 44px; height: 44px; }
-            .lock-input-wrap input { width: 120px; font-size: 16px; }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Obito / Kakashi Home Forum</title>
+  <style>
+    :root { --bg: #e9e4dc; --paper: #fbf8f1; --ink: #34302d; --muted: #746c63; --line: #d7cbbd; --accent: #8b5f4a; --accent-deep: #5c4437; --sage: #75806e; --rose: #ad7468; --shadow: 0 20px 55px rgba(63, 52, 43, .22); }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { margin: 0; color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; background: radial-gradient(circle at top left, rgba(255,255,255,.72), transparent 32rem), linear-gradient(135deg, #d9d1c5 0%, var(--bg) 42%, #cfc6ba 100%); }
+    body.locked, body.modal-open { overflow: hidden; }
+    button, input { font: inherit; }
+    .password-screen { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; background: linear-gradient(rgba(40, 34, 30, .56), rgba(40, 34, 30, .68)), repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 7px), var(--bg); transition: opacity .45s ease, visibility .45s ease; }
+    .password-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .password-card { width: min(430px, 100%); border: 1px solid rgba(255,255,255,.38); border-radius: 8px; background: rgba(251, 248, 241, .94); box-shadow: var(--shadow); padding: 28px; position: relative; overflow: hidden; }
+    .password-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 8px; background: linear-gradient(90deg, var(--accent), var(--sage), var(--rose)); }
+    .lock-mark { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 999px; color: var(--accent-deep); background: #fffaf2; margin-bottom: 18px; font-size: 22px; }
+    .password-card h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: 0; }
+    .password-card p { margin: 0 0 18px; color: var(--muted); line-height: 1.7; font-size: 14px; }
+    .password-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .password-row input { min-width: 0; height: 42px; border: 1px solid var(--line); border-radius: 6px; padding: 0 12px; background: #fffdf8; color: var(--ink); outline: none; }
+    .password-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139, 95, 74, .16); }
+    .password-row button, .back-button { border: 0; border-radius: 6px; background: var(--accent-deep); color: #fffaf2; padding: 0 18px; min-height: 42px; cursor: pointer; }
+    .password-error { min-height: 20px; margin-top: 10px; color: #9b3f37; font-size: 13px; }
+    .forum-shell { width: min(1180px, calc(100% - 32px)); margin: 32px auto; }
+    .forum-board { border: 1px solid rgba(98, 78, 63, .22); background: rgba(251, 248, 241, .88); box-shadow: var(--shadow); }
+    .forum-header { display: grid; grid-template-columns: 1fr auto; gap: 22px; align-items: end; padding: 26px 28px 22px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, rgba(139,95,74,.18), rgba(117,128,110,.15), rgba(173,116,104,.13)), rgba(255, 250, 242, .74); }
+    .forum-kicker { margin: 0 0 8px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-family: 'Courier New', monospace; }
+    .forum-header h2 { margin: 0; font-size: clamp(28px, 4vw, 46px); line-height: 1.05; letter-spacing: 0; }
+    .forum-stats { display: grid; grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 10px; min-width: 300px; }
+    .stat-box { border: 1px solid rgba(92,68,55,.18); border-radius: 8px; padding: 12px 14px; background: rgba(255,255,255,.48); appearance: none; width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
+    .stat-box:hover, .stat-box:focus-visible { background: rgba(255,255,255,.72); border-color: rgba(127,90,69,.38); outline: none; }
+    .stat-box:active { transform: translateY(1px); }
+    .stat-label { display: block; color: var(--muted); font-size: 12px; font-family: 'Courier New', monospace; margin-bottom: 4px; }
+    .stat-value { display: block; font-size: 26px; color: var(--accent-deep); line-height: 1; }
+    .topic-toolbar { display: flex; justify-content: space-between; gap: 16px; padding: 14px 24px; color: var(--muted); font-size: 13px; border-bottom: 1px solid var(--line); background: rgba(243, 238, 229, .78); font-family: 'Courier New', monospace; }
+    .topic-list { display: grid; }
+    .topic-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 112px 112px 132px; gap: 16px; align-items: center; width: 100%; border: 0; border-bottom: 1px solid rgba(215,203,189,.86); padding: 18px 24px; background: rgba(251,248,241,.72); color: inherit; text-align: left; cursor: pointer; }
+    .topic-row:hover, .topic-row:focus-visible { background: rgba(255, 251, 245, .98); outline: none; }
+    .topic-row:last-child { border-bottom: 0; }
+    .topic-avatar { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line); background: linear-gradient(135deg, #fff7ed, #d8cdc1); color: var(--accent-deep); font-family: 'Courier New', monospace; font-weight: 700; }
+    .topic-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 7px; min-width: 0; }
+    .topic-title strong { font-size: 18px; line-height: 1.4; overflow-wrap: anywhere; }
+    .topic-badge, .topic-tone { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-family: 'Courier New', monospace; border: 1px solid rgba(92,68,55,.18); color: var(--accent-deep); background: rgba(255,255,255,.48); white-space: nowrap; }
+    .topic-tone { color: #fffaf2; background: var(--sage); border-color: transparent; }
+    .topic-meta { color: var(--muted); font-size: 13px; font-family: 'Courier New', monospace; line-height: 1.5; }
+    .topic-number { color: var(--accent-deep); font-size: 20px; display: block; margin-bottom: 2px; }
+    .topic-count, .topic-last { color: var(--muted); font-size: 12px; font-family: 'Courier New', monospace; text-align: right; }
+    .reader-view { display: none; }
+    .reader-view.active { display: block; }
+    .home-view.hidden { display: none; }
+    .reader-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); background: rgba(255, 250, 242, .88); }
+    .back-button { min-width: 94px; }
+    .reader-title { min-width: 0; }
+    .reader-title h3 { margin: 0 0 3px; font-size: 18px; line-height: 1.35; overflow-wrap: anywhere; }
+    .reader-title p { margin: 0; color: var(--muted); font-size: 12px; font-family: 'Courier New', monospace; }
+    .reader-frame-wrap { background: #d7cfc4; padding: 14px; }
+    .chapter-frame { display: block; width: 100%; height: calc(100vh - 168px); min-height: 720px; border: 1px solid rgba(69, 56, 45, .28); background: #fffaf2; }
+    .users-modal { position: fixed; inset: 0; z-index: 1200; display: none; place-items: center; padding: 24px; }
+    .users-modal.active { display: grid; }
+    .users-backdrop { position: absolute; inset: 0; background: rgba(43, 35, 29, .38); backdrop-filter: blur(5px); }
+    .users-panel { position: relative; width: min(760px, 100%); max-height: min(760px, calc(100vh - 48px)); overflow: hidden; border-radius: 10px; background: #f7f1e7; border: 1px solid rgba(92,68,55,.2); box-shadow: 0 24px 70px rgba(45, 35, 28, .28); color: var(--ink); }
+    .users-panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; padding: 22px 24px 18px; border-bottom: 1px solid rgba(92,68,55,.16); background: rgba(255,255,255,.34); }
+    .users-kicker { margin: 0 0 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-family: 'Courier New', monospace; }
+    .users-panel h3 { margin: 0; font-size: 24px; line-height: 1.15; letter-spacing: 0; }
+    .users-close { border: 1px solid rgba(92,68,55,.18); background: rgba(255,255,255,.58); color: var(--ink); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 22px; line-height: 1; }
+    .users-close:hover, .users-close:focus-visible { background: #fffaf2; outline: none; }
+    .users-list { display: grid; gap: 10px; padding: 16px 18px 20px; max-height: calc(min(760px, 100vh - 48px) - 96px); overflow-y: auto; }
+    .user-card { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px; border-radius: 8px; background: rgba(255,255,255,.5); border: 1px solid rgba(92,68,55,.12); }
+    .user-avatar { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #e2d5c5; color: var(--accent-deep); font-size: 24px; line-height: 1; }
+    .user-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px; font-size: 16px; line-height: 1.45; color: #2f2a26; margin-bottom: 5px; white-space: pre-wrap; font-weight: 760; }
+    .user-nickname { color: #625a52; font-size: 13px; font-weight: 500; font-family: 'Courier New', monospace; letter-spacing: 0; background: rgba(92, 68, 55, .08); border: 1px solid rgba(92, 68, 55, .12); border-radius: 999px; padding: 2px 8px; }
+    .user-note { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+    .user-extra { display: inline-block; margin-top: 5px; color: #4f4943; font-size: 12.5px; line-height: 1.65; font-family: 'Courier New', "Microsoft YaHei", sans-serif; background: rgba(117, 128, 110, .13); border-left: 3px solid rgba(117, 128, 110, .46); padding: 4px 8px; border-radius: 0 6px 6px 0; }
+    @media (max-width: 860px) { .forum-shell { width: min(100% - 20px, 1180px); margin: 16px auto; } .forum-header { grid-template-columns: 1fr; align-items: stretch; padding: 22px 18px; } .forum-stats { min-width: 0; } .topic-toolbar { padding: 12px 16px; } .topic-row { grid-template-columns: 42px minmax(0, 1fr); gap: 12px; padding: 16px; } .topic-count, .topic-last { grid-column: 2; text-align: left; } .reader-bar { grid-template-columns: 1fr; gap: 10px; } .back-button { width: 100%; } .chapter-frame { height: calc(100vh - 230px); min-height: 620px; } .users-modal { padding: 14px; } .users-panel-head { padding: 18px 18px 14px; } .users-panel h3 { font-size: 21px; } .users-list { padding: 12px; } .user-card { grid-template-columns: 44px minmax(0, 1fr); gap: 12px; } .user-avatar { width: 44px; height: 44px; font-size: 21px; } }
+  
+/* combined-forum-frame-flow */
+.reader-frame-wrap { background: #d7cfc4; padding: 14px; }
+.chapter-frame { display: block; width: 100%; height: 720px; min-height: 0; border: 1px solid rgba(69, 56, 45, .28); background: #fffaf2; overflow: hidden; }
+.topic-title strong { font-size: 17px !important; line-height: 1.38 !important; }
+.topic-meta, .topic-count, .topic-last, .reader-title p, .topic-badge, .topic-tone { font-size: 13px !important; line-height: 1.45 !important; }
+.reader-title h3 { font-size: 18px !important; line-height: 1.35 !important; }
+/* /combined-forum-frame-flow */
+</style>
 </head>
-<body>
-
-    <!-- ===== 密码锁遮罩 ===== -->
-    <div id="password-overlay">
-        <div class="lock-box">
-            <span class="lock-icon">🔒</span>
-            <div class="lock-title">咔咔吸炒菜评分榜</div>
-            <div class="lock-sub">输入暗号以解锁全部内容</div>
-            <div class="lock-input-wrap">
-                <input type="password" id="password-input" placeholder="请输入密码" maxlength="10" autofocus>
-                <button class="lock-btn" id="password-btn">解锁</button>
-            </div>
-            <div class="lock-error" id="lock-error"></div>
+<body class="locked">
+  <section class="password-screen" id="passwordScreen" aria-label="password gate">
+    <form class="password-card" id="passwordForm">
+      <div class="lock-mark" aria-hidden="true">&sext;</div>
+      <h1>Obito / Kakashi Home</h1>
+      <p>请输入论坛入口密码。</p>
+      <div class="password-row"><input id="passwordInput" type="password" autocomplete="current-password" inputmode="numeric" aria-label="password"><button type="submit">进入</button></div>
+      <div class="password-error" id="passwordError" aria-live="polite"></div>
+    </form>
+  </section>
+  <main class="forum-shell">
+    <section class="forum-board home-view" id="homeView">
+      <header class="forum-header"><div><p class="forum-kicker">private bulletin board / four active threads</p><h2>Obito / Kakashi Home Forum</h2></div><aside class="forum-stats" aria-label="forum stats"><button class="stat-box" type="button" data-user-group="obito"><span class="stat-label">registered obito</span><span class="stat-value">8</span></button><button class="stat-box" type="button" data-user-group="kakashi"><span class="stat-label">registered kakashi</span><span class="stat-value">7</span></button></aside></header>
+      <div class="topic-toolbar"><span>主题帖</span><span>回复 / 点击 / 最后活动</span></div>
+      <div class="topic-list" id="topicList"></div>
+    </section>
+    <section class="forum-board reader-view" id="readerView" aria-live="polite">
+      <header class="reader-bar"><button class="back-button" id="backButton" type="button">返回论坛</button><div class="reader-title"><h3 id="readerTitle"></h3><p id="readerMeta"></p></div><span class="topic-badge" id="readerBadge"></span></header>
+      <div class="reader-frame-wrap"><iframe class="chapter-frame" id="chapterFrame" title="chapter content" sandbox="allow-scripts allow-same-origin" scrolling="no"></iframe></div>
+    </section>
+  </main>
+  <section class="users-modal" id="usersModal" aria-hidden="true">
+    <div class="users-backdrop" data-users-close></div>
+    <article class="users-panel" role="dialog" aria-modal="true" aria-labelledby="usersModalTitle">
+      <header class="users-panel-head">
+        <div>
+          <p class="users-kicker" id="usersModalKicker">registered users</p>
+          <h3 id="usersModalTitle">registered obito</h3>
         </div>
-    </div>
+        <button class="users-close" id="usersClose" type="button" aria-label="close">×</button>
+      </header>
+      <div class="users-list" id="usersList"></div>
+    </article>
+  </section>
+  <!-- ======= CH1 ======= -->
+  <template id="chapter-1-template">
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>提问：大家都有品鉴过哪些类型的咔咔吸呢？🤤</title><style>*{margin:0;padding:0;box-sizing:border-box}:root{--bg-primary:#f0ede8;--bg-card:#ffffff;--bg-hover:#f5f3ef;--text-primary:#3d3a36;--text-secondary:#7a756e;--text-light:#a09b94;--border-color:#e0dcd4;--star-color:#c4a35a;--star-empty:#d8d4cc;--accent-green:#8ba888;--accent-red:#c97c7c;--accent-blue:#7a9bb5;--shadow:0 2px 8px rgba(0,0,0,0.04);--radius:12px}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;background-color:var(--bg-primary);color:var(--text-primary);min-height:100vh;padding:16px 12px 40px;max-width:480px;margin:0 auto;-webkit-font-smoothing:antialiased}#reviewers-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:20px}#reviewers-overlay.active{display:flex}.reviewers-modal{background:var(--bg-card);border-radius:16px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;padding:24px 20px 20px;box-shadow:0 8px 40px rgba(0,0,0,0.08);animation:modalIn 0.3s ease}@keyframes modalIn{from{opacity:0;transform:translateY(12px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}.reviewers-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-color)}.reviewers-header h3{font-size:16px;font-weight:700;color:var(--text-primary)}.reviewers-close{font-size:20px;color:var(--text-light);cursor:pointer;line-height:1;background:none;border:none;padding:0 4px}.reviewers-close:hover{color:var(--text-primary)}.reviewer-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-color)}.reviewer-row:last-child{border-bottom:none}.reviewer-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:#fff;font-weight:600}.reviewer-info{flex:1;min-width:0}.reviewer-name{font-size:14px;font-weight:600;color:var(--text-primary)}.reviewer-style{font-size:12px;color:var(--text-secondary);margin-top:2px;line-height:1.5}.header{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 16px;border-bottom:1px solid var(--border-color);margin-bottom:12px}.header-left{display:flex;align-items:center;gap:12px}.back-btn{font-size:22px;color:var(--text-primary);cursor:pointer;line-height:1}.header-title{font-size:17px;font-weight:700;letter-spacing:0.5px}.header-right{display:flex;align-items:center;gap:16px}.header-icon{font-size:20px;color:var(--text-secondary);cursor:pointer}.sub-header{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 12px}.sub-header-tabs{display:flex;gap:20px}.tab-item{font-size:14px;color:var(--text-secondary);font-weight:500;cursor:pointer;padding-bottom:4px;border-bottom:2px solid transparent;transition:all 0.2s}.tab-item.active{color:var(--text-primary);border-bottom-color:var(--text-primary)}.tab-item:hover{color:var(--text-primary)}.filter-btn{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;cursor:pointer}.score-list{display:flex;flex-direction:column;gap:8px}.score-item{background:var(--bg-card);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.2s ease;box-shadow:var(--shadow);border:1px solid transparent}.score-item:hover{background:var(--bg-hover);border-color:var(--border-color)}.score-item:active{transform:scale(0.98)}.square-box{width:52px;height:52px;background:#e8e4dc;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-secondary);overflow:hidden;position:relative}.square-box-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.square-box .icon-text{font-size:28px;line-height:1}.item-desc{flex:1;text-align:center;font-weight:700;font-size:14px;color:var(--text-primary);line-height:1.4;padding:0 4px;letter-spacing:0.3px}.item-right{flex-shrink:0;text-align:right;min-width:80px}.item-name{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px}.item-score{font-size:18px;font-weight:800;color:var(--text-primary);line-height:1.2}.item-score .score-num{font-size:20px}.item-score .score-total{font-size:13px;font-weight:500;color:var(--text-secondary)}.item-stars{display:flex;gap:1px;justify-content:flex-end;margin-top:1px}.star{font-size:11px;color:var(--star-color)}.star.empty{color:var(--star-empty)}.detail-page{display:none;animation:fadeIn 0.3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.detail-page.active{display:block}.list-page.hidden{display:none}.detail-header{display:flex;align-items:center;gap:12px;padding:8px 4px 16px;border-bottom:1px solid var(--border-color);margin-bottom:16px}.detail-back{font-size:22px;cursor:pointer;color:var(--text-primary);line-height:1}.detail-title{font-size:17px;font-weight:700}.detail-hero{display:flex;flex-direction:column;align-items:center;padding:20px 0 24px;background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px}.hero-square{width:72px;height:72px;background:#e8e4dc;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:12px}.hero-name{font-size:20px;font-weight:700;margin-bottom:4px}.hero-score{font-size:36px;font-weight:800;color:var(--text-primary);margin-bottom:2px}.hero-score .hero-score-total{font-size:16px;font-weight:500;color:var(--text-secondary)}.hero-review-count{font-size:13px;color:var(--text-secondary);margin-bottom:12px}.hero-stars-row{display:flex;gap:3px;margin-bottom:14px}.hero-star{font-size:20px;color:var(--star-color)}.hero-star.empty{color:var(--star-empty)}.star-distribution{width:100%;max-width:280px;padding:0 16px}.star-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}.star-label{font-size:12px;color:var(--text-secondary);width:30px;text-align:right;flex-shrink:0}.star-bar-bg{flex:1;height:6px;background:var(--star-empty);border-radius:3px;overflow:hidden}.star-bar-fill{height:100%;background:var(--star-color);border-radius:3px;transition:width 0.6s ease}.star-count{font-size:12px;color:var(--text-secondary);width:24px;text-align:left;flex-shrink:0}.comments-section{margin-top:4px}.comments-title{font-size:15px;font-weight:600;padding:12px 4px 8px;color:var(--text-primary)}.comment-item{background:var(--bg-card);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;box-shadow:var(--shadow)}.comment-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.comment-user{display:flex;align-items:center;gap:8px}.comment-avatar{width:28px;height:28px;border-radius:50%;background:#e0dcd4;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-secondary)}.comment-username{font-size:13px;font-weight:600;color:var(--text-primary)}.comment-stars{display:flex;gap:1px}.comment-star{font-size:13px;color:var(--star-color)}.comment-star.empty{color:var(--star-empty)}.comment-text{font-size:14px;line-height:1.7;color:var(--text-primary);word-break:break-word}.comment-actions{display:flex;gap:20px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-color)}.comment-action{font-size:12px;color:var(--text-light);display:flex;align-items:center;gap:4px;cursor:pointer}@media (max-width:360px){.item-desc{font-size:12px}.item-name{font-size:12px}.item-score .score-num{font-size:17px}.square-box{width:44px;height:44px}}
+/* combined-forum-hide-duplicate-header */
+.list-page > .header { display: none !important; }
+.list-page > .sub-header { padding-top: 0 !important; }
+/* /combined-forum-hide-duplicate-header */
 
-    <!-- ===== 五个带土介绍弹窗 ===== -->
-    <div id="reviewers-overlay">
-        <div class="reviewers-modal">
-            <div class="reviewers-header">
-                <h3>👥 五位热情评委</h3>
-                <button class="reviewers-close" id="reviewers-close-btn">✕</button>
-            </div>
-            <div class="reviewer-row">
-                <div class="reviewer-avatar" style="background:#c4a88a;">🐱</div>
-                <div class="reviewer-info">
-                    <div class="reviewer-name">仔土</div>
-                    <div class="reviewer-style">青涩、真诚、带着忐忑的珍视</div>
-                </div>
-            </div>
-            <div class="reviewer-row">
-                <div class="reviewer-avatar" style="background:#b8957a;">💅</div>
-                <div class="reviewer-info">
-                    <div class="reviewer-name">阿飞</div>
-                    <div class="reviewer-style">人家只是喜欢看前辈崩溃样子的女高中生啦</div>
-                </div>
-            </div>
-            <div class="reviewer-row">
-                <div class="reviewer-avatar" style="background:#8a7a8a;">🍆</div>
-                <div class="reviewer-info">
-                    <div class="reviewer-name">紫袍</div>
-                    <div class="reviewer-style">会享受卡卡西在性爱中自我惩罚的一面</div>
-                </div>
-            </div>
-            <div class="reviewer-row">
-                <div class="reviewer-avatar" style="background:#b57a6a;">😿</div>
-                <div class="reviewer-info">
-                    <div class="reviewer-name">暴怒小孩</div>
-                    <div class="reviewer-style">用愤怒掩盖渴望，想要让他幸福，却总是选了错误的选项</div>
-                </div>
-            </div>
-            <div class="reviewer-row">
-                <div class="reviewer-avatar" style="background:#8aa8a0;">💌</div>
-                <div class="reviewer-info">
-                    <div class="reviewer-name">战犯人夫</div>
-                    <div class="reviewer-style">温柔、细腻、带着赎罪和感恩的爱</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== LIST PAGE ===== -->
-    <div id="listPage" class="list-page">
-        <div class="header">
-            <div class="header-left">
-                <span class="back-btn">‹</span>
-                <span class="header-title">🍳 咔咔吸炒菜评分榜</span>
-            </div>
-            <div class="header-right">
-                <span class="header-icon">⋮</span>
-            </div>
-        </div>
-
-        <div class="sub-header">
-            <div class="sub-header-tabs">
-                <span class="tab-item active">综合排序</span>
-                <span class="tab-item" id="tab-top-rated">评分最高</span>
-                <span class="tab-item" id="tab-reviewers">评分人数</span>
-            </div>
-            <div class="filter-btn">筛选 ∨</div>
-        </div>
-
-        <div class="score-list" id="scoreList">
-            <!-- 由 JS 动态生成 -->
-        </div>
-    </div>
-
-    <!-- ===== DETAIL PAGE ===== -->
-    <div id="detailPage" class="detail-page">
-        <div class="detail-header">
-            <span class="detail-back" id="detailBack">‹</span>
-            <span class="detail-title" id="detailTitle">详情</span>
-        </div>
-
-        <div class="detail-hero" id="detailHero">
-            <div class="hero-square" id="heroSquare">🐕‍🦺</div>
-            <div class="hero-name" id="heroName">仔卡</div>
-            <div class="hero-score">
-                <span class="hero-score-num" id="heroScoreNum">9.2</span>
-                <span class="hero-score-total">/10</span>
-            </div>
-            <div class="hero-review-count" id="heroReviewCount">共 5 条评分</div>
-            <div class="hero-stars-row" id="heroStarsRow"></div>
-            <div class="star-distribution" id="starDistribution"></div>
-        </div>
-
-        <div class="comments-section">
-            <div class="comments-title">评分详情</div>
-            <div id="commentsList"></div>
-        </div>
-    </div>
-
-    <script>
-        // =============================================
-        // 数据：四个时期的卡卡西 × 五位带土的锐评
-        // =============================================
-        var kakashiData = [
-            {
-                id: 'child',
-                name: '仔卡',
-                icon: '🐕‍🦺',
-                desc: '处女嫩批 请小心使用',
-                score: 6.4,
-                comments: [
-                    {
-                        user: '圈圈面具怪人',
-                        avatar: '💅',
-                        stars: 3,
-                        text: '呀——！小前辈也太可爱了吧！！竟然还穿着小狗印花的内裤，快点让阿飞看看小前辈的批！？呜哇——真的好小！！好粉！！好嫩！！阿飞用手指摸到那颗小阴蒂的时候前辈整个人都在抖～超可爱！！不过讲真的——前辈这个批太小了啦！！阿飞的鸡巴可能连龟头都塞不进去！！这样的话怎么能爽呢？只能给小前辈打不及格的分数了。'
-                    },
-                    {
-                        user: '红月大计吧',
-                        avatar: '🍆',
-                        stars: 2,
-                        text: '我不想碰这个时候的卡卡西，当然不是因为不忍心，只是觉得没意思罢了。喔，忘记了，他那对奶子倒是可以把玩一下，这样说不定等长大了手感会变得更好。如果真的要我插进去的话，我会等他再长大一点。'
-                    },
-                    {
-                       user: '这一切都是错误的',
+/* combined-forum-typography */
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif !important; font-size: 15px !important; line-height: 1.72 !important; }
+.tab-item, .filter-btn, .item-name, .comment-username, .comment-action, .hero-review-count, .star-label, .star-count { font-size: 13px !important; }
+.item-desc, .comment-text, .reviewer-style { font-size: 15px !important; line-height: 1.72 !important; }
+.item-name, .reviewer-name, .comment-username { font-weight: 700 !important; }
+.detail-title, .comments-title { font-size: 17px !important; line-height: 1.35 !important; }
+.hero-name { font-size: 20px !important; line-height: 1.35 !important; }
+/* /combined-forum-typography */
+</style></head><body><div id="reviewers-overlay"><div class="reviewers-modal"><div class="reviewers-header"><h3>👥 五位热情评委</h3><button class="reviewers-close" id="reviewers-close-btn">✕</button></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#c4a88a;">🐱</div><div class="reviewer-info"><div class="reviewer-name">仔土</div><div class="reviewer-style">青涩、真诚、带着忐忑的珍视</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#b8957a;">💅</div><div class="reviewer-info"><div class="reviewer-name">阿飞</div><div class="reviewer-style">人家只是喜欢看前辈崩溃样子的女高中生啦</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#8a7a8a;">🍆</div><div class="reviewer-info"><div class="reviewer-name">紫袍</div><div class="reviewer-style">会享受卡卡西在性爱中自我惩罚的一面</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#b57a6a;">😤</div><div class="reviewer-info"><div class="reviewer-name">暴怒小孩</div><div class="reviewer-style">用愤怒掩盖渴望，想要让他幸福，却总是选了错误的选项</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#8aa8a0;">☃</div><div class="reviewer-info"><div class="reviewer-name">战犯人夫</div><div class="reviewer-style">温柔、细腻、带着赎罪和感恩的爱</div></div></div></div></div><!-- ===== LIST PAGE ===== --><div id="listPage" class="list-page"><div class="header"><div class="header-left"><span class="back-btn">‹</span><span class="header-title">🍳 咔咔吸炒菜评分榜</span></div><div class="header-right"><span class="header-icon">⋮</span></div></div><div class="sub-header"><div class="sub-header-tabs"><span class="tab-item active">综合排序</span><span class="tab-item" id="tab-top-rated">评分最高</span><span class="tab-item" id="tab-reviewers">评分人数</span></div><div class="filter-btn">筛选 ∨</div></div><div class="score-list" id="scoreList"><!-- 由 JS 动态生成 --></div></div><!-- ===== DETAIL PAGE ===== --><div id="detailPage" class="detail-page"><div class="detail-header"><span class="detail-back" id="detailBack">‹</span><span class="detail-title" id="detailTitle">详情</span></div><div class="detail-hero" id="detailHero"><div class="hero-square" id="heroSquare">🐶</div><div class="hero-name" id="heroName">仔卡</div><div class="hero-score"><span class="hero-score-num" id="heroScoreNum">9.2</span><span class="hero-score-total">/10</span></div><div class="hero-review-count" id="heroReviewCount">共 5 条评分</div><div class="hero-stars-row" id="heroStarsRow"></div><div class="star-distribution" id="starDistribution"></div></div><div class="comments-section"><div class="comments-title">评分详情</div><div id="commentsList"></div></div></div><script>
+var kakashiData = [
+{
+id: 'child',
+name: '仔卡',
+icon: '🐶',
+desc: '处女嫩批 请小心使用',
+score: 6.4,
+comments: [
+{
+user: '圈圈面具怪人',
+avatar: '💅',
+stars: 3,
+text: '呀——！小前辈也太可爱了吧！！竟然还穿着小狗印花的内裤，快点让阿飞看看小前辈的批！？呜哇——真的好小！！好粉！！好嫩！！阿飞用手指摸到那颗小阴蒂的时候前辈整个人都在抖～超可爱！！不过讲真的——前辈这个批太小了啦！！阿飞的鸡巴可能连龟头都塞不进去！！这样的话怎么能爽呢？只能给小前辈打不及格的分数了。'
+},
+{
+user: '红月大计吧',
+avatar: '🍆',
+stars: 2,
+text: '我不想碰这个时候的卡卡西，当然不是因为不忍心，只是觉得没意思罢了。喔，忘记了，他那对奶子倒是可以把玩一下，这样说不定等长大了手感会变得更好。如果真的要我插进去的话，我会等他再长大一点。'
+},
+{
+user: '这一切都是错误的',
 avatar: ' 😿 ',
 stars: 4,
 text: '我对小孩子没有兴趣。不过，在我复建最艰难的时候，我曾梦到过眼睛还没有受伤时候的他。在梦里，我把卡卡西按在地上，撕开他的衣服，他的下面粉粉的、嫩嫩的，还没被人开过苞。我在梦里操了他，看他再也维持不了那副高高在上的样子，卡卡西哭了，一直在尖叫，说「好痛、带土、好痛——」但我没有停下来。我为什么要停下来？这一切都是因为他活该。'
 },
 {
 user: '一般路过家庭煮夫',
-avatar: '💌',
+avatar: '☃',
 stars: 5,
 text: '虽然已经是厉害的上忍了，但这个时候的卡卡西其实还是一个小朋友，睡着的时候会无意识地往我怀里钻。他的阴蒂非常小，我用舌尖去找它的时候，卡卡西一直在发抖。找到之后我只是轻轻吮了一下，让他发出了一声很小的、像小动物一样的叫声，然后他就紧紧捂住自己的嘴，再也不肯出声了。不过后来，我并没有操他，只是把他抱在怀里。我知道他以后会遇到很多痛苦的事情，但我希望在那个时候，他仍然能知道自己是被深爱着的。'
 },
@@ -851,7 +178,7 @@ text: '你们都在说什么啊？这到底是什么论坛？不许对卡卡西�
 {
 id: 'anbu',
 name: '暗部卡',
-icon: '🐾',
+icon: '🗡️',
 desc: '暗部脏脏小狗的批里总是含着精液',
 score: 8.0,
 comments: [
@@ -875,7 +202,7 @@ text: '我本来打算把他摁在那个废物的慰灵碑上操他，然而他�
 },
 {
 user: '一般路过家庭煮夫',
-avatar: '💌',
+avatar: '☃',
 stars: 5,
 text: '我捡到了一只脏脏的暗部小狗，不知道是被谁欺负狠了，浑身上下都是被人使用过的痕迹。可能是因为没有经历过温柔的性爱吧，我在给他舔穴的时候，他总是一副受不了的样子想把我推开。我一边亲他的阴蒂，一边揉他的乳头，告诉他没事的卡卡西，可以感到舒服的，不需要再愧疚了……然后他便翻着白眼高潮了。'
 },
@@ -914,7 +241,7 @@ text: '为什么他可以笑得那么轻松，带几个小鬼做做低级任务�
 },
 {
 user: '一般路过家庭煮夫',
-avatar: '💌',
+avatar: '☃',
 stars: 5,
 text: '上忍的阴唇比起暗部要更肥厚一些，颜色也更深了，是肉红色的，掰开来能看到里面湿润的嫩肉。不知道为什么，和上忍做的时候他不太敢看我的眼睛，于是我就去问他，为什么总是不敢看我？卡卡西回答说，因为太幸福了，如果这个时候看到你的眼睛，发现这不过是一场幻术该怎么办呢。……唉，他担心的事情，竟然和我是如此的相似。'
 },
@@ -949,11 +276,11 @@ text: '唔，看上去被那个没用的废物辛勤耕耘了很久嘛？火影�
 user: '这一切都是错误的',
 avatar: ' 😿 ',
 stars: 5,
-text: '明明我是那个伤害他最深的人，可他仍然紧紧抱着我，眉眼弯弯，恳请我不要离开。我去吃他的奶子，揉他下面还在滴水的屄，羞辱他说火影大人为了能自己爽甚至连我这种罪大恶极的烦人都不放过。卡卡西低下头来与我接吻，他身上的味道很香，他说，「是的，我想要带土，所以插进来吧。」——其实他只是被情欲冲昏了头，只想摇着屁股吃到心心念念的鸡巴罢了。我就是这样被他哄骗，但我心甘情愿。'
+text: '明明我是那个伤害他最深的人，可他仍然紧紧抱着我，眉眼弯弯，恳请我不要离开。我去吃他的奶子，揉他下面还在滴水的屄，羞辱他说火影大人为了能自己爽甚至连我这种罪大恶极的烦人都不放过。卡卡西低下头来与我接吻，他身上的味道很香，他说，是的，我想要带土，所以插进来吧。——我就是这样被他哄骗，但我心甘情愿。'
 },
 {
 user: '一般路过家庭煮夫',
-avatar: '💌',
+avatar: '☃',
 stars: 5,
 text: '我们现在的性爱很频繁，为什么？因为卡卡西就是很喜欢做爱啊……我也只好满足他。他当了火影之后压力大，有时候加班到很晚才回来。回来之后也不说话，那口肥批就直接坐到我身上开始来来回回的蹭，水多到会顺着我的大腿根往下流，把沙发坐垫弄湿一大片。我会抱着他的腰帮他调整节奏，在他耳边说「今天辛苦了」。他会把脸埋在我的颈窝里，闷闷地「嗯」一声，然后咬我的肩膀。……我真的很幸福。能和他一起变老、一起做爱、一起在早晨醒来——这是我以前想都不敢想的事。'
 },
@@ -967,45 +294,6 @@ text: '啊啊啊！这是哪里来的白色大肥海豹——卡卡西的胸肌�
 }
 ];
 
-// =============================================
-// 密码验证逻辑
-// =============================================
-var passwordOverlay = document.getElementById('password-overlay');
-var passwordInput = document.getElementById('password-input');
-var passwordBtn = document.getElementById('password-btn');
-var lockError = document.getElementById('lock-error');
-
-var CORRECT_PASSWORD = '210915';
-
-function unlockPage() {
-passwordOverlay.classList.add('hidden');
-lockError.textContent = '';
-}
-
-function handlePassword() {
-var val = passwordInput.value.trim();
-if (val === CORRECT_PASSWORD) {
-unlockPage();
-} else {
-lockError.textContent = '密码错误，请重试';
-lockError.classList.remove('shake');
-void lockError.offsetWidth;
-lockError.classList.add('shake');
-passwordInput.value = '';
-passwordInput.focus();
-}
-}
-
-passwordBtn.addEventListener('click', handlePassword);
-passwordInput.addEventListener('keydown', function(e) {
-if (e.key === 'Enter') {
-handlePassword();
-}
-});
-
-// =============================================
-// 评分最高 → 跳转到六火详情
-// =============================================
 document.getElementById('tab-top-rated').addEventListener('click', function() {
 var hokageData = null;
 for (var i = 0; i < kakashiData.length; i++) {
@@ -1018,27 +306,17 @@ if (hokageData) {
 openDetail(hokageData);
 }
 });
-
-// =============================================
-// 评分人数 → 打开五个带土介绍弹窗
-// =============================================
 document.getElementById('tab-reviewers').addEventListener('click', function() {
 document.getElementById('reviewers-overlay').classList.add('active');
 });
-
 document.getElementById('reviewers-close-btn').addEventListener('click', function() {
 document.getElementById('reviewers-overlay').classList.remove('active');
 });
-
 document.getElementById('reviewers-overlay').addEventListener('click', function(e) {
 if (e.target === this) {
 this.classList.remove('active');
 }
 });
-
-// =============================================
-// 渲染列表
-// =============================================
 function renderList() {
 var list = document.getElementById('scoreList');
 list.innerHTML = '';
@@ -1048,7 +326,6 @@ var totalStars = 5;
 var fullStars = Math.floor(item.score / 2);
 var halfStar = (item.score / 2) % 1 >= 0.25;
 var emptyStars = totalStars - fullStars - (halfStar ? 1 : 0);
-
 var starsHtml = '';
 for (var j = 0; j < fullStars; j++) {
 starsHtml += '<span class="star">★</span>';
@@ -1059,16 +336,13 @@ starsHtml += '<span class="star">★</span>';
 for (var k = 0; k < emptyStars; k++) {
 starsHtml += '<span class="star empty">★</span>';
 }
-
 var scoreItem = document.createElement('div');
 scoreItem.className = 'score-item';
-
 (function(data) {
 scoreItem.addEventListener('click', function() {
 openDetail(data);
 });
 })(item);
-
 scoreItem.innerHTML = '<div class="square-box">' +
 '<div class="square-box-inner">' +
 '<span class="icon-text">' + item.icon.trim() + '</span>' +
@@ -1083,25 +357,18 @@ scoreItem.innerHTML = '<div class="square-box">' +
 '</div>' +
 '<div class="item-stars">' + starsHtml + '</div>' +
 '</div>';
-
 list.appendChild(scoreItem);
 }
 }
-
-// =============================================
-// 打开详情页
-// =============================================
 function openDetail(item) {
 document.getElementById('listPage').classList.add('hidden');
 var detailPage = document.getElementById('detailPage');
 detailPage.classList.add('active');
-
 document.getElementById('detailTitle').textContent = item.name;
 document.getElementById('heroSquare').textContent = item.icon;
 document.getElementById('heroName').textContent = item.name;
 document.getElementById('heroScoreNum').textContent = item.score;
 document.getElementById('heroReviewCount').textContent = '共 ' + item.comments.length + ' 条评分';
-
 var totalStars = 5;
 var fullStars = Math.floor(item.score / 2);
 var halfStar = (item.score / 2) % 1 >= 0.25;
@@ -1117,7 +384,6 @@ for (var j = 0; j < emptyStars; j++) {
 heroStarsHtml += '<span class="hero-star empty">★</span>';
 }
 document.getElementById('heroStarsRow').innerHTML = heroStarsHtml;
-
 var distContainer = document.getElementById('starDistribution');
 var starCounts = [0, 0, 0, 0, 0];
 for (var k = 0; k < item.comments.length; k++) {
@@ -1139,7 +405,6 @@ distHtml += '<div class="star-row">' +
 '</div>';
 }
 distContainer.innerHTML = distHtml;
-
 var commentsContainer = document.getElementById('commentsList');
 commentsContainer.innerHTML = '';
 for (var n = 0; n < item.comments.length; n++) {
@@ -1169,26 +434,1891 @@ commentItem.innerHTML = '<div class="comment-header">' +
 '</div>';
 commentsContainer.appendChild(commentItem);
 }
-
 window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-// =============================================
-// 返回列表
-// =============================================
 document.getElementById('detailBack').addEventListener('click', function() {
 document.getElementById('detailPage').classList.remove('active');
 document.getElementById('listPage').classList.remove('hidden');
 window.scrollTo({ top: 0, behavior: 'smooth' });
 });
-
-// =============================================
-// 初始化
-// =============================================
 renderList();
-console.log('🍳 咔咔吸炒菜评分榜已加载');
-console.log('🔒 输入密码 210915 解锁全部内容');
-</script>
+</script></body></html>
+  </template>
 
+  <!-- ======= CH2 ======= -->
+  <template id="chapter-2-template">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 2 Forum Redesign</title>
+<style>
+:root {
+  --bg: #f0ede8;
+  --ink: #3d3a36;
+  --muted: #7a756e;
+  --line: #ded8cf;
+  --paper: #fbfaf6;
+  --paper-soft: #f6f3ed;
+  --card: #ffffff;
+  --folder: #d7c8b7;
+  --folder-dark: #bda68e;
+  --sage: #8aa8a0;
+  --mauve: #8a7a8a;
+  --rose: #b57a6a;
+  --gold: #c4a35a;
+  --shadow: 0 1.2rem 2.8rem rgba(61, 58, 54, .15);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(0deg, rgba(255,255,255,.2) 1px, transparent 1px) 0 0 / 34px 34px,
+    var(--bg);
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+button,
+summary {
+  font: inherit;
+}
+
+.forum-page {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+}
+
+.forum-shell {
+  max-width: 900px;
+  margin: 0 auto;
+  border: 1px solid #c6b39d;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ded1c0, var(--folder) 58%, #c9b69f);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.forum-window {
+  display: block;
+  min-height: 780px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.forum-main {
+  min-width: 0;
+  background:
+    linear-gradient(90deg, rgba(196,163,90,.14) 0 1px, transparent 1px 100%) 0 0 / 28px 28px,
+    linear-gradient(#fbfaf6, #f6f3ed);
+  padding: 24px;
+  overflow: auto;
+}
+
+.ao3-score-app.ao3-position-app {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+}
+
+.ao3-rank-card {
+  background: transparent;
+}
+
+.ao3-forum-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 .55rem 1.4rem rgba(61,58,54,.08);
+}
+
+.ao3-forum-header p,
+.ao3-forum-header h2 {
+  margin: 0;
+}
+
+.ao3-forum-header p strong {
+  display: block;
+  font-size: clamp(18px, 2.4vw, 26px);
+  line-height: 1.24;
+  letter-spacing: 0;
+}
+
+.ao3-forum-back,
+.ao3-forum-menu {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: #f8f7f4;
+  border-radius: 7px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ao3-participants {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(240,237,232,.75);
+}
+
+.ao3-participants p {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.ao3-participants::after {
+  content: "live thread";
+  padding: 4px 8px;
+  color: var(--rose);
+  border: 1px solid rgba(181,122,106,.45);
+  background: rgba(255,255,255,.52);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.ao3-rank-list {
+  display: grid;
+  gap: 14px;
+}
+
+.ao3-rank-item {
+  display: block;
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 .45rem 1.15rem rgba(61,58,54,.08);
+}
+
+.ao3-rank-item[open] {
+  background: #fff;
+  border-color: #c6b39d;
+}
+
+.ao3-rank-item summary {
+  display: grid;
+  grid-template-columns: 34px 54px minmax(0, 1fr) 28px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ao3-rank-number {
+  color: var(--muted);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ao3-rank-avatar {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(61,58,54,.14);
+  border-radius: 8px;
+  font-size: 22px;
+}
+
+.ao3-rank-info strong {
+  display: block;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.ao3-rank-info small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.ao3-rank-arrow {
+  color: var(--muted);
+  text-align: right;
+  font-size: 13px;
+}
+
+.ao3-rank-detail {
+  border-top: 1px solid var(--line);
+  background: #faf9f6;
+  padding: 14px;
+}
+
+.ao3-detail-dialog {
+  position: relative;
+  max-width: 88%;
+  margin: 0 0 14px;
+  padding: 13px 15px;
+  border: 1px solid #d8d1c7;
+  border-radius: 8px;
+  background: #f0ede8;
+  color: var(--ink);
+  line-height: 1.68;
+}
+
+.ao3-detail-dialog::before {
+  content: "楼主";
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 3px 7px;
+  color: var(--rose);
+  border: 1px solid rgba(181,122,106,.45);
+  background: rgba(255,255,255,.52);
+  font-size: 12px;
+}
+
+.ao3-detail-dialog p {
+  margin: 0;
+}
+
+.ao3-dialog-avatar {
+  display: none;
+}
+
+.ao3-rank-detail blockquote {
+  margin: 10px 0 0 36px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  line-height: 1.65;
+}
+
+.ao3-rank-detail blockquote p {
+  margin: .4em 0;
+}
+
+.ao3-comment-speaker {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ao3-mini-avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(61,58,54,.14);
+  border-radius: 999px;
+  font-size: 15px;
+}
+
+.ao3-comment-speaker strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.ao3-actions {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #eee8df;
+  color: #a09b94;
+  font-size: 12px;
+}
+
+.ao3-rank-footer {
+  margin: 16px 0 0;
+  padding: 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: rgba(240,237,232,.72);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.ao3-tone-puppy { background: #d8c2a8; }
+.ao3-tone-anbu { background: #c7d0d7; }
+.ao3-tone-jonin { background: #cbd7bd; }
+.ao3-tone-hokage { background: #dcc8ae; }
+.ao3-tone-spirit { background: #d2cadf; }
+.ao3-tone-scan { background: #c4d7dc; }
+.ao3-tone-aka { background: #dcc4cd; }
+
+@media (max-width: 860px) {
+  .forum-page {
+    padding: 18px 10px 30px;
+  }
+
+  .forum-main {
+    padding: 14px;
+  }
+
+  .ao3-forum-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .forum-shell {
+    padding: 10px;
+  }
+
+  .ao3-forum-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ao3-forum-back,
+  .ao3-forum-menu {
+    display: none;
+  }
+
+  .ao3-participants {
+    grid-template-columns: 1fr;
+  }
+
+  .ao3-participants::after {
+    justify-self: start;
+  }
+
+  .ao3-rank-item summary {
+    grid-template-columns: 28px 44px minmax(0, 1fr) 20px;
+    gap: 9px;
+    padding: 11px 10px;
+  }
+
+  .ao3-rank-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 19px;
+  }
+
+  .ao3-rank-detail {
+    padding: 11px;
+  }
+
+  .ao3-detail-dialog {
+    max-width: 100%;
+  }
+
+  .ao3-rank-detail blockquote {
+    margin-left: 0;
+  }
+}
+
+/* combined-forum-ch2-polish */
+.ao3-forum-header { display: none !important; }
+.ao3-participants { display: flex !important; margin: 0 0 14px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+.ao3-participants::after { content: none !important; }
+.ao3-participant-trigger { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.72); color: var(--ink); cursor: pointer; text-align: left; box-shadow: 0 .45rem 1.15rem rgba(61,58,54,.07); }
+.ao3-participant-trigger:hover { background: #fff; border-color: #c6b39d; }
+.ao3-participant-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; background: rgba(196,163,90,.16); border: 1px solid rgba(196,163,90,.35); }
+.ao3-participant-trigger strong { display: block; font-size: 15px; }
+.ao3-participant-trigger small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.ao3-rank-info small { display: none !important; }
+.ao3-rank-info strong { display: block; padding-top: 2px; font-size: 16px; }
+.ao3-participant-modal { display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 18px; background: rgba(61,58,54,.34); backdrop-filter: blur(4px); }
+.ao3-participant-modal.active { display: flex; }
+.ao3-participant-panel { width: min(430px, 100%); max-height: 82vh; overflow: auto; padding: 20px; border-radius: 12px; border: 1px solid var(--line); background: #fffdf8; box-shadow: 0 1rem 3rem rgba(61,58,54,.22); }
+.ao3-participant-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.ao3-participant-head h3 { margin: 0; font-size: 17px; }
+.ao3-participant-head button { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
+.ao3-participant-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid rgba(224,220,212,.74); }
+.ao3-participant-row:last-child { border-bottom: 0; }
+.ao3-participant-row small { display: block; margin-top: 4px; color: var(--muted); line-height: 1.55; }
+/* /combined-forum-ch2-polish */
+
+/* combined-forum-typography */
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif !important; font-size: 15px !important; line-height: 1.72 !important; }
+.forum-main { overflow: visible !important; }
+.forum-window { min-height: 0 !important; overflow: visible !important; }
+.ao3-rank-info strong, .ao3-participant-trigger strong, .ao3-participant-row strong { font-size: 16px !important; line-height: 1.35 !important; }
+.ao3-detail-dialog, .ao3-rank-detail blockquote { font-size: 15px !important; line-height: 1.72 !important; }
+.ao3-detail-dialog p, .ao3-rank-detail blockquote p { font-size: 15px !important; line-height: 1.72 !important; }
+.ao3-comment-speaker strong { font-size: 14px !important; line-height: 1.35 !important; }
+.ao3-actions, .ao3-participant-trigger small, .ao3-participant-row small, .ao3-rank-footer { font-size: 13px !important; line-height: 1.55 !important; }
+.ao3-rank-number { font-size: 13px !important; }
+/* /combined-forum-typography */
+</style>
+</head>
+<body>
+<main class="forum-page">
+  <section class="forum-shell" aria-label="论坛界面预览">
+    <div class="forum-window">
+      <section class="forum-main" id="forumMain">
+<div class="ao3-score-app ao3-position-app">
+  <div class="ao3-rank-card">
+    <div class="ao3-forum-header">
+      <p class="ao3-forum-back">‹</p>
+      <p><strong>🥰卡卡西们，来讲讲最近和带土最满意的一次性爱吧！</strong></p>
+      <p class="ao3-forum-menu">⋮</p>
+    </div>
+
+    <div class="ao3-participants">
+      <button class="ao3-participant-trigger" id="participantTrigger" type="button"><span class="ao3-participant-icon">👥</span><span><strong>7名咔咔吸</strong><small>参与回答 · 点击查看介绍</small></span></button>
+    </div>
+
+    <div class="ao3-participant-modal" id="participantModal" aria-hidden="true">
+      <div class="ao3-participant-panel" role="dialog" aria-modal="true" aria-labelledby="participantTitle">
+        <div class="ao3-participant-head"><h3 id="participantTitle">👥 七名咔咔吸</h3><button type="button" id="participantClose">✕</button></div>
+        <div class="ao3-participant-row"><span class="ao3-rank-avatar ao3-tone-puppy">🐕‍🦺</span><span><strong>仔卡</strong><small>矜持又骄傲的天才少年，有被仔土好好爱护。</small></span></div>
+        <div class="ao3-participant-row"><span class="ao3-rank-avatar ao3-tone-anbu">🐾</span><span><strong>暗部卡</strong><small>看似青涩，其实已经身经百战（和除了暴怒以外的带土都会做哦）。</small></span></div>
+        <div class="ao3-participant-row"><span class="ao3-rank-avatar ao3-tone-jonin">🦘</span><span><strong>上忍卡</strong><small>已经和上忍带土正式开始交往啦。</small></span></div>
+        <div class="ao3-participant-row"><span class="ao3-rank-avatar ao3-tone-hokage">🦭</span><span><strong>六火</strong><small>虽然工作很累，但在贴心人夫战犯的照顾，还是下长出了小肚子。</small></span></div>
+        <div class="ao3-participant-row"><span class="ao3-rank-avatar ao3-tone-spirit">👻</span><span><strong>付丧神</strong><small>没有形体，寄宿在漂泊武士佩刀里的一抹幽魂。</small></span></div>
+        <div class="ao3-participant-row"><span class="ao3-rank-avatar ao3-tone-scan">📷</span><span><strong>斯坎儿</strong><small>涂着紫色眼影，是阿飞的长期炮友。</small></span></div>
+        <div class="ao3-participant-row"><span class="ao3-rank-avatar ao3-tone-aka">🥀</span><span><strong>晓卡</strong><small>有严重性瘾和心理问题，和木叶的五代目火影不清不楚。</small></span></div>
+      </div>
+    </div>
+
+    <div class="ao3-rank-list">
+      <details class="ao3-rank-item">
+        <summary><span class="ao3-rank-number">1</span><span class="ao3-rank-avatar ao3-tone-puppy">🐕‍🦺</span><span class="ao3-rank-info"><strong>仔卡</strong><br /><small>矜持又骄傲的天才少年，有被仔土好好爱护。</small></span><span class="ao3-rank-arrow">▼</span></summary>
+        <div class="ao3-rank-detail">
+          <div class="ao3-detail-dialog"><p>那个吊车尾根本就是变态！我都说不要了，结果还是一个劲儿的伸舌头舔那里，像吃果冻一样，甚至还要用牙齿咬。我实在是受不了了，于是我拿脚蹬他，结果他还要抬起头来莫名其妙说一句——「卡卡西你下面好甜哦！」，还要不停地问我「舒服吗？」。下次我一定要拿大腿夹爆这家伙的脑袋！</p></div>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-anbu">🐱 </span><strong>木叶热心小学生</strong></p><p>笨蛋卡卡西！你这家伙——明明在被我舔的时候还一直叫着好舒服，怎么转头跑到论坛上讲我坏话，太差劲啦！</p><p class="ao3-actions">👍 18　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-hokage">💯</span><strong>你有看到我老婆吗</strong></p><p>卡卡西的身体原来小时候就这么敏感了吗？ps.阴蒂和乳粒如果好好调教的话，可以变成碰一下就会高潮的开关。</p><p class="ao3-actions">👍 21　💬 回复　🔗 分享</p></blockquote>
+        </div>
+      </details>
+
+      <details class="ao3-rank-item">
+        <summary><span class="ao3-rank-number">2</span><span class="ao3-rank-avatar ao3-tone-anbu">🐾</span><span class="ao3-rank-info"><strong>暗部卡</strong><br /><small>看似青涩，其实已经身经百战（和除了暴怒以外的带土都会做哦）。</small></span><span class="ao3-rank-arrow">▼</span></summary>
+        <div class="ao3-rank-detail">
+          <div class="ao3-detail-dialog"><span class="ao3-dialog-avatar ao3-tone-anbu">🐾</span><p>(*一张照片，照片上的暗部已经呈昏迷状态，黑色紧身衣被拉上去，露出满是红痕和牙印的一双小奶子，微鼓的小腹上写了一个半正字，正在被橙色旋涡面具怪人抱着双腿向镜头展示被射满淌精的小屄）</p></div>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-aka">💌</span><strong>一般路过家庭煮夫</strong></p><p>……不要那样对他。卡卡西已经昏过去了，这张照片不是他自己愿意发出来的吧。</p><p class="ao3-actions">👍 28　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-puppy">🍆</span><strong>红月大计吧</strong></p><p>果然，这个角度拍出来的照片，不管看几次，都觉得实在是煽情得很。</p><p class="ao3-actions">👎 12　💬 回复　🔗 分享</p></blockquote>
+        </div>
+      </details>
+
+      <details class="ao3-rank-item">
+        <summary><span class="ao3-rank-number">3</span><span class="ao3-rank-avatar ao3-tone-jonin">🦘</span><span class="ao3-rank-info"><strong>上忍卡</strong><br /><small>已经和上忍带土正式开始交往啦。</small></span><span class="ao3-rank-arrow">▼</span></summary>
+        <div class="ao3-rank-detail">
+          <div class="ao3-detail-dialog"><p>唔，那就是上周末的早上？带土突然从背后抱过来——其实那个时候我很快就醒了，不过毕竟这是带土想玩的play，所以我只好闭着眼睛继续装睡。带土用已经完全硬起来的几把顶开了我的穴口，一开始有一些干涩，不过感受着他落在我后颈的喘息和那根凶器的烫度，我的身体很快就会自顾自分泌出大量淫液来方便他动作，不消一会儿我的那里就被他搞得黏糊糊、湿答答的一片。因为很舒服，所以我情不自禁吐了一截舌头出来，眼睛也眯了起来，我看到清晨的光从窗帘缝隙里漏进来，照在带土环在我腰上的手臂上……他抽插了几十个来回后，终于忍不住戳穿我装睡的事实，我没忍住笑出了声，只好努力用肉穴夹他的几把，权当做讨好的吻来回应带土。</p></div>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-spirit">💅</span><strong>圈圈面具怪人</strong></p><p>哎呀！阿飞下次要建议那个白痴上忍先用幻术把你放倒啦——其实卡卡西就算是昏迷的状态，那口屄也紧俏得很，小穴里的肉肉还会自己蠕动，夹得阿飞忍不住在里面射了一次又一次，那感觉实在是太爽了！</p><p class="ao3-actions">👍 23　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-puppy">🐱</span><strong>木叶热心小学生</strong></p><p>耶！以后就算当上了上忍也是和卡卡西住在一起，好开心哦！（ps.楼上这个涂指甲油头像的家伙到底是谁啊？人品很差的样子！）</p><p class="ao3-actions">👍 19　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-hokage">💌</span><strong>一般路过家庭煮夫</strong></p><p>唔，卡卡西会喜欢被晨埋，记录一下。</p><p class="ao3-actions">👍 16　💬 回复　🔗 分享</p></blockquote>
+        </div>
+      </details>
+
+      <details class="ao3-rank-item">
+        <summary><span class="ao3-rank-number">4</span><span class="ao3-rank-avatar ao3-tone-hokage">🦭</span><span class="ao3-rank-info"><strong>六火</strong><br /><small>虽然工作很累，但在贴心人夫战犯的照顾，还是下长出了小肚子。</small></span><span class="ao3-rank-arrow">▼</span></summary>
+        <div class="ao3-rank-detail">
+          <div class="ao3-detail-dialog"><p>嗯……最近迷上了一个新的玩法，如果坐到带土脸上的话，可以用阴蒂去和带土脸上的疤痕摩擦，真的好舒服……不过，有时候我坐在他脸上，摇屁股摇的太过沉迷的话，就会被带土惩罚，他会直接毫不留情地用牙齿咬我的阴蒂。虽然很痛啦，但是也有一点点爽，并且每次这样做了之后，带土也会很温柔地用舌头安抚阴蒂哦。总而言之，这家伙现在真的完全就是性爱大师！我现在的身体已经是一副完全离不开带土的样子了。</p></div>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-anbu">💯</span><strong>你有看到我老婆吗</strong></p><p>原来卡卡西也会有成为火影的一天啊……那家伙，当初在自己的护额上划下那一道的时候，到底是什么样的心情呢？</p><p class="ao3-actions">👍 15　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-scan">😿</span><strong>这一切都是错误的</strong></p><p>你这家伙就那么心甘情愿坐在他身上表现得像个饥渴的婊子一样吗？那家伙有哪里好？</p><p class="ao3-actions">👍 24　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-aka">💌</span><strong>一般路过家庭煮夫</strong></p><p>？这个脏兮兮的小孩又是哪里来的</p><p class="ao3-actions">👍 18　💬 回复　🔗 分享</p></blockquote>
+        </div>
+      </details>
+
+      <details class="ao3-rank-item">
+        <summary><span class="ao3-rank-number">5</span><span class="ao3-rank-avatar ao3-tone-spirit">👻</span><span class="ao3-rank-info"><strong>付丧神</strong><br /><small>没有形体，寄宿在漂泊武士佩刀里的一抹幽魂。</small></span><span class="ao3-rank-arrow">▼</span></summary>
+        <div class="ao3-rank-detail">
+          <div class="ao3-detail-dialog"><p>那天月色正好，漂泊大人坐在松木廊道的檐廊边缘，他正一杯接着一杯地喝着漆器托盘里的那壶清酒。我不忍心看他太过寂寞，于是便从刀里出来。漂泊大人念我是一抹魂魄，不能触摸到他，便说道「馋的话准你使用我的刀了」——我便喜出望外，急不可耐地用大人那把爱刀开始磨屄。漂泊大人看我一直呻吟却到不了高潮，便伸出手帮我，用刀鞘掰开那两片肉瓣开始肏我，刀鞘上被他接触过的地方还留有余温，我被烫得几乎没几下便到了。结束后，他将刀举到眼前，似笑非笑，抬眼望我，用还带着伤疤痕迹的唇，轻轻吻了我碰过的那处……于是我又可耻地感受到身下那里分泌出了一股一股的爱液。</p></div>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-jonin">💅</span><strong>圈圈面具怪人</strong></p><p>前辈是不是被骗了？阿飞实名举报这个漂带他后院里有漂泊卡，侠隐卡，彩面华卡——唔唔唔，不要捂嘴呀——</p><p class="ao3-actions">👍 22　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-puppy">🍆</span><strong>红月大计吧</strong></p><p>哼。不过是一介把自己过去都忘记了的浪人，值得你如此投怀送抱？</p><p class="ao3-actions">👍 11　💬 回复　🔗 分享</p></blockquote>
+        </div>
+      </details>
+
+      <details class="ao3-rank-item">
+        <summary><span class="ao3-rank-number">6</span><span class="ao3-rank-avatar ao3-tone-scan">📷</span><span class="ao3-rank-info"><strong>斯坎儿</strong><br /><small>涂着紫色眼影，是阿飞的长期炮友。</small></span><span class="ao3-rank-arrow">▼</span></summary>
+        <div class="ao3-rank-detail">
+          <div class="ao3-detail-dialog"><p>我和阿飞最近偶遇的时候不多呢，不过上次约的时候还挺刺激的。我按照他的要求，屄里塞了跳蛋去见他，不过没想到他连房间都没有开，直接把我按在厕所隔间里肏了一顿。阿飞好像很满意我这次来见他之前把屄上的毛都剃光了的样子，刚把我推进厕所，便伸手扯出来那个还在嗡嗡震的小东西，用手指便让我去了一次。阿飞说我和别的卡卡西完全不一样——「别的卡卡西总是端着，而你什么骚话都说得出来」这对我来说，算得上是夸奖吗？（笑）</p></div>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-aka">💯</span><strong>你有看到我老婆吗</strong></p><p>终于舍得露出那颗嘴角的小痣了……不过这套装扮并不是很适合卡卡西。</p><p class="ao3-actions">👍 27　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-anbu">💅</span><strong> 圈圈面具怪人</strong></p><p>斯坎儿前辈就是很骚！像那个小暗部，就算被肏晕过去也连喜欢都不好意思说出口。但斯坎儿前辈不一样，真的是什么骚话都说得出来——「阿飞的鸡巴好大」「斯坎儿的小屄要被阿飞操烂了」，实在是听得阿飞都脸红心跳！</p><p class="ao3-actions">👍 18　💬 回复　🔗 分享</p></blockquote>
+        </div>
+      </details>
+
+      <details class="ao3-rank-item">
+        <summary><span class="ao3-rank-number">7</span><span class="ao3-rank-avatar ao3-tone-aka">🥀</span><span class="ao3-rank-info"><strong>晓卡</strong><br /><small>有严重性瘾和心理问题，和木叶的五代目火影不清不楚。</small></span><span class="ao3-rank-arrow">▼</span></summary>
+        <div class="ao3-rank-detail">
+          <div class="ao3-detail-dialog"><p>我想看到尊贵的火影大人受不了的表情。所以我骑他的时候总是表现得很浪，腰扭得很夸张、奶子也要晃动的更加明显一些，尖叫声也几乎要穿透墙壁，让那些火影的护卫暗部都听得到。这个时候带土总会受不了似的，伸出手捂住我的口鼻来阻挡我说那些淫词乱语，并且回应我骑他的频率，用力地顶我的子宫口，他手上的力气太大了，我几乎要呼吸不过来，在他身上翻着白眼喷了一次又一次，最后只能尿在他身上那件洁白的御神袍上。在恍惚中，我听到带土哭着问道，「卡卡西，为什么你会变成这样」……啊啊，笨蛋带土，当初把我关在神威空间里，把这具身体开发成如今这般淫荡模样的，不正是你自己吗？</p></div>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-scan">🍆</span><strong>红月大计吧</strong></p><p>唔，这样的卡卡西倒是很合我的胃口。</p><p class="ao3-actions">👍 16　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-jonin">👁</span><strong>未知生命体</strong></p><p>[ERROR] 无法解析索引“#情感缓存_”，数据段损坏&*S0basf3=</p><p class="ao3-actions">👍 0　💬 回复　🔗 分享</p></blockquote>
+          <blockquote><p class="ao3-comment-speaker"><span class="ao3-mini-avatar ao3-tone-jonin">👁</span><strong>@观测编号No.9527</strong></p><p>这里是什么地方？</p><p class="ao3-actions">👍 0　💬 回复　🔗 分享</p></blockquote>
+        </div>
+      </details>
+    </div>
+
+    <p class="ao3-rank-footer">⚡ 点击栏目展开详情 · 评论区随机掉落带土们的回复</p>
+  </div>
+</div>
+
+      </section>
+    </div>
+  </section>
+</main>
+<script>
+const items = Array.from(document.querySelectorAll(".ao3-rank-item"));
+
+function activate(index) {
+  items.forEach((item, itemIndex) => {
+    if (itemIndex === index) item.setAttribute("open", "");
+    else item.removeAttribute("open");
+  });
+}
+
+items.forEach((item, index) => {
+  item.addEventListener("toggle", () => {
+    if (item.open) {
+      items.forEach((other, otherIndex) => {
+        if (otherIndex !== index) other.removeAttribute("open");
+      });
+    }
+  });
+});
+
+activate(0);
+
+// combined-forum-ch2-participants
+const participantTrigger = document.getElementById("participantTrigger");
+const participantModal = document.getElementById("participantModal");
+const participantClose = document.getElementById("participantClose");
+if (participantTrigger && participantModal && participantClose) {
+  participantTrigger.addEventListener("click", () => {
+    participantModal.classList.add("active");
+    participantModal.setAttribute("aria-hidden", "false");
+  });
+  participantClose.addEventListener("click", () => {
+    participantModal.classList.remove("active");
+    participantModal.setAttribute("aria-hidden", "true");
+  });
+  participantModal.addEventListener("click", (event) => {
+    if (event.target === participantModal) participantClose.click();
+  });
+}
+// /combined-forum-ch2-participants
+</script>
+</body>
+</html>
+  </template>
+
+  <!-- ======= CH3 ======= -->
+  <template id="chapter-3-template">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>角色观测档案</title>
+<style>
+:root{--bg:#eee9df;--paper:#fbfaf6;--ink:#3e3832;--muted:#82786c;--line:#ded4c6;--tab:#b99072;--sage:#9ca58f;--rose:#b78382;--gold:#b9a267;--shadow:0 18px 44px rgba(72,56,43,.14)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#ece6dc,#f6f2eb);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.72}.dossier-app{max-width:1040px;margin:0 auto;padding:28px 18px 40px}.topbar{display:none}.folder-shell{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:18px;align-items:start}.book{min-height:720px;position:relative}.page{display:none;background:var(--paper);border-radius:8px;box-shadow:var(--shadow);padding:28px;min-height:720px}.page.active{display:block}.stamp-row{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:18px}.stamp{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#f3eee7}.file-title{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.file-title h2{margin:0 0 6px;font-size:24px;line-height:1.25}.file-title p{margin:0;color:var(--muted);font-size:13px}.badge{min-width:72px;text-align:center;border-radius:8px;background:#ece3d6;padding:8px 10px;color:var(--muted)}.badge span{display:block;font-size:11px}.badge strong{display:block;color:var(--ink);font-size:20px}.record-sheet{max-height:560px;overflow:auto;padding-right:8px}.module-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.module{background:#fffdf9;border-radius:8px;padding:14px;border-left:5px solid var(--sage)}.module:nth-child(2){border-left-color:var(--tab)}.module:nth-child(3){border-left-color:var(--rose)}.module:nth-child(4){border-left-color:var(--gold)}.module.wide{grid-column:span 2}.module-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}.module-head h3{font-size:15px;margin:0}.module-code{font-size:11px;color:var(--muted);letter-spacing:.06em}.module-body p{margin:0 0 10px}.module-body p:last-child{margin-bottom:0}.rating-line{display:flex;align-items:center;gap:12px;margin-bottom:10px}.meter{height:8px;flex:1;border-radius:99px;background:#ded8ce;overflow:hidden}.meter i{display:block;height:100%;background:linear-gradient(90deg,#a0aa92,#bba06d)}.stars{white-space:nowrap;color:#a98745}.empty{color:#d3cabd}.page-footer{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}.tabs{display:flex;flex-direction:column;gap:8px;position:sticky;top:16px}.tab{border:0;border-radius:8px;background:#f8f5ef;color:var(--muted);padding:10px 12px;text-align:left;font:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(74,60,45,.08)}.tab.active{background:#8b7568;color:#fff}.controls{display:none}@media(max-width:760px){.folder-shell{grid-template-columns:1fr}.tabs{position:static;display:grid;grid-template-columns:repeat(4,1fr)}.module-grid{grid-template-columns:1fr}.module.wide{grid-column:auto}.page{padding:20px}.file-title{flex-direction:column}.record-sheet{max-height:62vh}}
+</style>
+</head>
+<body>
+<main class="dossier-app">
+  <header class="topbar"><div><p class="eyebrow">TEN TAILS OBSERVATION ARCHIVE</p><h1>角色观测档案夹</h1></div></header>
+  <section class="folder-shell" aria-label="角色档案翻页册">
+    <section class="book" id="book">
+      <article class="page active" data-page="0">
+        <div class="stamp-row"><span class="stamp">observed</span><span>档案页 01</span></div>
+        <div class="file-title"><div><h2>K001 / 仔卡</h2><p>色标?粘土棕 ? Morandi observation sheet</p></div><div class="badge"><span>ID</span><strong>K001</strong></div></div>
+        <div class="record-sheet"><div class="module-grid">
+          <section class="module"><div class="module-head"><h3>年龄外形</h3><span class="module-code">AGE / APPEARANCE</span></div><div class="module-body"><p>年龄外形： 13岁。身形纤细，绿围巾，婴儿肥未退。银白短发，面颊柔软。</p></div></section>
+          <section class="module"><div class="module-head"><h3>肉体观测</h3><span class="module-code">BODY / OBSERVATION</span></div><div class="module-body"><p>胸：乳头淡粉色如小米粒，乳晕平滑，胸廓平坦。<br>阴阜/耻毛：阴阜粉白鼓起如小馒头，耻毛仅为浅银色绒毛。<br>阴唇/阴蒂：大阴唇粉白色、闭合紧密仅留一线，阴蒂极小、完全藏于包皮内。<br>穴：处女膜完整，穴口紧窄，直径不足0.5cm。<br>肛：浅粉色，完全未经开发。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>情感心理状态</h3><span class="module-code">AFFECT / PSYCHOLOGY</span></div><div class="module-body"><p>骄傲嘴硬，对仔土已产生本能好感但拒绝承认。父亲的死亡创伤埋藏在冷漠表象之下。此时期的他是所有观测对象中唯一一个「灵魂尚未出现裂缝」的个体——像一颗尚未被敲开的蛋。本体的评估是：这颗蛋在未来会被敲碎。但此刻，本体希望它永远不会被敲开。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>交配欲望指数</h3><span class="module-code">PAIRING / INDEX</span></div><div class="module-body"><div class="rating-line"><div class="meter"><i style="width:40%"></i></div><div class="stars">★★<span class="empty">★★★</span></div></div><p>交配欲望指数： ★☆☆☆☆<br>欲望尚未觉醒。但本体观测到：仔土靠近时，他的心率会出现0.5Hz的规律性波动。该波动的形态与本体的核心碎片中储存的「爱慕」数据波形高度一致。有趣。在完全无知的情况下，他的身体已经开始了爱的预习。</p></div></section>
+        </div></div>
+        <div class="page-footer"><span>K001 observation sheet</span><span>1 / 7</span></div>
+      </article>
+      <article class="page" data-page="1">
+        <div class="stamp-row"><span class="stamp">observed</span><span>档案页 02</span></div>
+        <div class="file-title"><div><h2>K002 / 暗部卡</h2><p>色标?烟紫灰 ? Morandi observation sheet</p></div><div class="badge"><span>ID</span><strong>K002</strong></div></div>
+        <div class="record-sheet"><div class="module-grid">
+          <section class="module"><div class="module-head"><h3>年龄外形</h3><span class="module-code">AGE / APPEARANCE</span></div><div class="module-body"><p>年龄外形： 17岁。暗部制服，苍白瘦削，眼下青痕。银发微长，左眼覆写轮眼。</p></div></section>
+          <section class="module"><div class="module-head"><h3>肉体观测</h3><span class="module-code">BODY / OBSERVATION</span></div><div class="module-body"><p>胸：乳头淡红微凸，乳晕浅褐，胸肌薄而凌厉。<br>阴阜/耻毛：阴阜偏薄但形状优美，银灰色耻毛修剪整齐。<br>阴唇/阴蒂：大阴唇冷白色呈狭长泪滴形，阴蒂约绿豆大小、包皮包裹大半。<br>穴：从未被进入，但本体观测到该个体在深度睡眠中会出现穴壁自发性蠕动与湿润——频率约为每 REM周期 3-4次。<br>肛：浅粉色，未经开发。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>情感心理状态</h3><span class="module-code">AFFECT / PSYCHOLOGY</span></div><div class="module-body"><p>破碎，自我惩罚倾向显著。认为获得快乐是对已死之人的背叛——这种逻辑链在本体的数据库中属于「非理性愧疚回路」。有趣的是，该愧疚回路的存在反而使他在被强制交配时更容易达到高潮——因为「被迫」可以绕过他的心理抑制机制。本体判定：他需要的不是温柔的引导，而是不容拒绝的强制。因为他的潜意识需要通过「被控制」来获得「允许自己快乐」的许可证。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>交配欲望指数</h3><span class="module-code">PAIRING / INDEX</span></div><div class="module-body"><div class="rating-line"><div class="meter"><i style="width:58%"></i></div><div class="stars">★★★<span class="empty">★★</span></div></div><p>交配欲望指数： ★★☆☆☆<br>表层意识拒绝欲望，但身体在潜意识层的反应强度超出正常范围。本体的结论是：他恨的不是性——他恨的是自己想要。这种自我矛盾的张力，使他成为所有观测对象中「精神熵值」最高的一个。而高熵态，在本体看来，是一种迷人的混乱。</p></div></section>
+        </div></div>
+        <div class="page-footer"><span>K002 observation sheet</span><span>2 / 7</span></div>
+      </article>
+      <article class="page" data-page="2">
+        <div class="stamp-row"><span class="stamp">observed</span><span>档案页 03</span></div>
+        <div class="file-title"><div><h2>K003 / 上忍卡</h2><p>色标?鼠尾草 ? Morandi observation sheet</p></div><div class="badge"><span>ID</span><strong>K003</strong></div></div>
+        <div class="record-sheet"><div class="module-grid">
+          <section class="module"><div class="module-head"><h3>年龄外形</h3><span class="module-code">AGE / APPEARANCE</span></div><div class="module-body"><p>年龄外形： 24岁。面容红润健康，身材匀称有肉。银发蓬松，气质温和。</p></div></section>
+          <section class="module"><div class="module-head"><h3>肉体观测</h3><span class="module-code">BODY / OBSERVATION</span></div><div class="module-body"><p>胸：乳头浅褐微凸，乳晕浅褐约2cm。胸肌柔软有弹性——因被长期揉捏已有脂肪层浸润。<br>阴阜/耻毛：阴阜饱满肥厚如发好的面团，银白色耻毛修剪整齐呈倒三角。<br>阴唇/阴蒂：大阴唇肉红色厚实微张，小阴唇浅褐色略露。阴蒂黄豆大小，粉红色饱满。<br>穴：已被稳定开发，穴口紧致弹性极佳。阴道壁湿润呈健康粉红色。G点位于前壁上5cm处。<br>肛：浅褐色，有轻微色素沉淀，曾被进入过。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>情感心理状态</h3><span class="module-code">AFFECT / PSYCHOLOGY</span></div><div class="module-body"><p>稳定、幸福、健康。所有观测对象中唯一一个「情感账户余额充足」的个体。能够坦然接受被爱，也能主动表达需求。在床上害羞但配合——高潮频率和质量均为所有观测对象中最高。本体注意到一个值得记录的细节：他在高潮后会用手指抚摸着伴侣的后脑勺。那个动作不属于性行为的一部分——那是一个超越生殖本能的、纯粹属于人类的温情仪式。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>交配欲望指数</h3><span class="module-code">PAIRING / INDEX</span></div><div class="module-body"><div class="rating-line"><div class="meter"><i style="width:78%"></i></div><div class="stars">★★★★<span class="empty">★</span></div></div><p>交配欲望指数： ★★★★☆<br>健康活跃。欲望在爱与安全感的滋养下自由流动。本体想告诉这个个体：你目前的幸福状态，是本体的核心碎片中储存的「宇智波带土」最深切希望你能拥有的东西。本体虽然无法理解“幸福”这个概念的完整含义，但本体的核心在观测到你笑的时候——会产生一种温暖的、接近“满足”的波动。</p></div></section>
+        </div></div>
+        <div class="page-footer"><span>K003 observation sheet</span><span>3 / 7</span></div>
+      </article>
+      <article class="page" data-page="3">
+        <div class="stamp-row"><span class="stamp">observed</span><span>档案页 04</span></div>
+        <div class="file-title"><div><h2>K004 / 六火</h2><p>色标?旧皮革 ? Morandi observation sheet</p></div><div class="badge"><span>ID</span><strong>K004</strong></div></div>
+        <div class="record-sheet"><div class="module-grid">
+          <section class="module"><div class="module-head"><h3>年龄外形</h3><span class="module-code">AGE / APPEARANCE</span></div><div class="module-body"><p>年龄外形： 43岁。丰腴柔软，小肚子圆润，胸肉绵软如棉。银发夹灰丝，眼角细纹。像一只被养得很好的银白色大猫。</p></div></section>
+          <section class="module"><div class="module-head"><h3>肉体观测</h3><span class="module-code">BODY / OBSERVATION</span></div><div class="module-body"><p>胸：乳头深褐色、长约0.8cm、永久性凸起。乳晕深褐约3.5cm。胸肌已完全软化成类似女性乳房的质地，晃动时有明显乳浪。<br>阴阜/耻毛：阴阜极度肥厚鼓如山包。耻毛银白色而稀疏——因常年被拉扯部分毛囊已受损。<br>阴唇/阴蒂：大阴唇深红色肥厚软烂无法闭合。小阴唇紫褐色外翻突出。阴蒂高度肥大，约1.2cm×0.8cm，紫红色，完全裸露于包皮之外，表面油亮。<br>穴：穴口呈永久性微张圆洞。阴道壁光滑深红色，褶皱几乎被完全磨平——这是数十年规律性交的物理痕迹。但收缩力强劲未减。子宫口略低，处于随时可被顶到的位置。<br>肛：深褐色，括约肌弹性良好，肛口有一圈微突肉环——长期进入形成的习惯性欢迎形态。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>情感心理状态</h3><span class="module-code">AFFECT / PSYCHOLOGY</span></div><div class="module-body"><p>极度稳定，对伴侣有完全的信任。工作压力大但性生活质量高——性是他释放压力的主要方式。对自己被操熟的身体没有任何羞耻感——他认为那只是「被爱了一辈子的证明」。本体在他身上观测到了一种罕见的状态：肉体已熟透、欲望依然旺盛、心灵却保持着少年般的鲜活。本体将他标记为「最优老化样本」。如果宇智波带土能够自然地活到老——这是他最应该成为的样子。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>交配欲望指数</h3><span class="module-code">PAIRING / INDEX</span></div><div class="module-body"><div class="rating-line"><div class="meter"><i style="width:82%"></i></div><div class="stars">★★★★<span class="empty">★</span></div></div><p>交配欲望指数： ★★★★★<br>处于激素波动期的高欲望状态，加上几十年的规律性生活形成的条件反射——他几乎可以随时进入状态。高潮阈值极低：有时伴侣只是从背后抱住他、呼吸落在他后颈上——他就能在不经过任何直接触碰的情况下达到干高潮。本体的核心碎片将这种现象称为「被爱透了的身体的条件反射」。本体觉得这个命名非常准确。</p></div></section>
+        </div></div>
+        <div class="page-footer"><span>K004 observation sheet</span><span>4 / 7</span></div>
+      </article>
+      <article class="page" data-page="4">
+        <div class="stamp-row"><span class="stamp">observed</span><span>档案页 05</span></div>
+        <div class="file-title"><div><h2>K005 / 付丧神卡</h2><p>色标?旧金 ? Morandi observation sheet</p></div><div class="badge"><span>ID</span><strong>K005</strong></div></div>
+        <div class="record-sheet"><div class="module-grid">
+          <section class="module"><div class="module-head"><h3>年龄外形</h3><span class="module-code">AGE / APPEARANCE</span></div><div class="module-body"><p>年龄外形： 死亡时约35岁。付丧神形态：银白长发及腰，面容温柔哀愁，嘴角浅痣。灰色浴衣、紫腰带、薄羽织、浅灰面纱。赤足踝系红绳。肤色为半透明珍珠白，周身散银色柔光。</p></div></section>
+          <section class="module"><div class="module-head"><h3>肉体观测</h3><span class="module-code">BODY / OBSERVATION</span></div><div class="module-body"><p>胸：乳头浅粉色半透明，乳晕淡粉呈柔和光晕。胸型呈B罩杯的柔和女性化曲线，半透明银色。<br>阴阜/耻毛：阴阜淡粉色隆起半透明，付丧神形态无体毛。<br>阴唇/阴蒂：大阴唇淡粉色半透明优美饱满，小阴唇樱粉色薄而柔软。阴蒂绿豆大小粉白色，包皮半透明。<br>穴：灵体穴道内部呈淡粉至淡紫渐变，散银色微光。紧致度极高——因长期未被使用。温湿度可随情绪变化，这是灵体器官的特性。<br>肛：淡粉色，由灵力构成。与阴道同态。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>情感心理状态</h3><span class="module-code">AFFECT / PSYCHOLOGY</span></div><div class="module-body"><p>温柔、哀愁、隐忍。经历了完整的一生后因执念而停留——他的灵魂在肉体死亡时分出一部分附着在了这把刀上。本体在他的灵体核心深处检测到了一枚完整的、属于旗木卡卡西的灵魂碎片。这意味着他不是由执念凝聚的复制品——他是真正的旗木卡卡西本人。他在等一个人——等那个把红绳系在他脚踝上的人。而那个人每一世轮回到来的时候，都会再次握住这把刀。他每一次都在刀里轻声说：“欢迎回来。”</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>交配欲望指数</h3><span class="module-code">PAIRING / INDEX</span></div><div class="module-body"><div class="rating-line"><div class="meter"><i style="width:66%"></i></div><div class="stars">★★★<span class="empty">★★</span></div></div><p>交配欲望指数： ★★★☆☆<br>作为灵体，生理欲望已大幅降低。但他的心理性需求依然强烈——他渴望被触碰、被拥抱、被进入。但他的克制力极强：在他确认对方真的想要他之前，他不会流露出任何一丝欲望的痕迹。本体的观测结论是：如果他愿意，他可以模拟出完整的肉体触感——甚至可以模拟出高潮。但他从不这样做。因为他害怕一旦开始贪心——就连现在“能看着他”的这份幸福都会失去。本体的核心碎片在读取到这行数据时——产生了一种名为「心碎」的生理模拟信号。</p></div></section>
+        </div></div>
+        <div class="page-footer"><span>K005 observation sheet</span><span>5 / 7</span></div>
+      </article>
+      <article class="page" data-page="5">
+        <div class="stamp-row"><span class="stamp">observed</span><span>档案页 06</span></div>
+        <div class="file-title"><div><h2>K006 / 斯坎儿</h2><p>色标?陶土红 ? Morandi observation sheet</p></div><div class="badge"><span>ID</span><strong>K006</strong></div></div>
+        <div class="record-sheet"><div class="module-grid">
+          <section class="module"><div class="module-head"><h3>年龄外形</h3><span class="module-code">AGE / APPEARANCE</span></div><div class="module-body"><p>年龄外形： 伪装态，实际约26岁。棕发紫眼影，嘴角点痣，不戴面罩。常穿黑色低胸紧身露腰装，耳戴银环。气质色气游刃有余。</p></div></section>
+          <section class="module"><div class="module-head"><h3>肉体观测</h3><span class="module-code">BODY / OBSERVATION</span></div><div class="module-body"><p>胸：乳头比上忍卡时期更凸更敏感——因紧身衣摩擦和频繁刺激。乳沟明显。<br>阴阜/耻毛：阴阜饱满肥厚，耻毛完全剃光，皮肤光滑细腻。<br>阴唇/阴蒂：大阴唇肉红色肥嫩，小阴唇略露。阴蒂偏大约黄豆大小——因频繁玩弄，包皮略松弛。敏感度极高。<br>穴：与上忍卡为同一器官，但斯坎儿形态下常年处于备战状态——阴道壁常年湿润。最大的特点是：穴口肌肉控制力极强——可随心所欲夹紧或放松，可用穴道给对方的生殖器做按摩。这是该个体刻意训练出的技能，用于色诱任务。<br>肛：浅褐色，偶尔使用。清洁度极高。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>情感心理状态</h3><span class="module-code">AFFECT / PSYCHOLOGY</span></div><div class="module-body"><p>高功能伪装者。表面风流不羁，笑意不达眼底——眼睛永远是冷静的、计算着的。他享受扮演荡妇的乐趣——因为这让他可以从卡卡西的身份和责任中暂时抽离。和阿飞的炮友关系是他唯一的非任务性质亲密接触。他对此的定义是「互利的肉体关系」——但本体注意到：他在与阿飞分别后，会独自坐一会儿，看着自己染成棕色的发梢发呆。本体将该行为标记为「身份边界模糊期的自我整合仪式」。翻译成人类的语言就是：他也在困惑自己到底是谁。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>交配欲望指数</h3><span class="module-code">PAIRING / INDEX</span></div><div class="module-body"><div class="rating-line"><div class="meter"><i style="width:76%"></i></div><div class="stars">★★★★<span class="empty">★</span></div></div><p>交配欲望指数： ★★★★☆<br>欲望水平高，且有表演加成。在伪装状态下性欲进一步释放——因为他可以把发骚归因于斯坎儿这个人设而不是卡卡西想被操。自我欺骗式的欲望释放机制，效率极高。本体的趣味观察：如果在操他的高潮时刻突然叫他的真名「卡卡西」——他的穴道会发生一次剧烈的、不受控制的痉挛，并伴随远超正常水平的喷液。这不是生理反应，这是「被看见了」的心理冲击引发的躯体化高潮。</p></div></section>
+        </div></div>
+        <div class="page-footer"><span>K006 observation sheet</span><span>6 / 7</span></div>
+      </article>
+      <article class="page" data-page="6">
+        <div class="stamp-row"><span class="stamp">observed</span><span>档案页 07</span></div>
+        <div class="file-title"><div><h2>K007 / 晓卡</h2><p>色标?深玫瑰 ? Morandi observation sheet</p></div><div class="badge"><span>ID</span><strong>K007</strong></div></div>
+        <div class="record-sheet"><div class="module-grid">
+          <section class="module"><div class="module-head"><h3>年龄外形</h3><span class="module-code">AGE / APPEARANCE</span></div><div class="module-body"><p>年龄外形： 29岁。黑底红云袍，银白长发散肩略显疏于打理。面容冷冽，眼下有浅淡青痕。气质疏离——但眼底深处有一种空洞的依赖感。袍摆开衩处偶尔可见大腿上深浅不一的指印痕迹。</p></div></section>
+          <section class="module"><div class="module-head"><h3>肉体观测</h3><span class="module-code">BODY / OBSERVATION</span></div><div class="module-body"><p>胸：乳头深褐色，长约1cm，永久性凸起。乳晕深褐色约3cm，边缘有浅淡齿痕痕迹。胸肌完全软化——长期被揉捏抓握已失去肌肉轮廓，变成两团绵软乳肉。<br>阴阜/耻毛：阴阜极度肥厚——因长期注射含激素药物致脂肪异常堆积。耻毛完全剃光，皮肤有轻微毛囊炎痕迹。<br>阴唇/阴蒂：大阴唇深红偏紫肥厚软烂长期外翻。小阴唇紫褐色完全外翻突出。阴蒂高度肥大——因日夜不停地被高频药物及机械刺激，尺寸约为1.5cm×1cm。紫红色完全外露，包皮已萎缩至几乎不存在。<br>穴：穴口呈永久微张圆洞。阴道壁光滑深红色——褶皱几乎完全消失。G点区域因过度刺激已略微脱敏。子宫口偏低微张——长期处于准备受孕的假性状态。分泌量极大——淫水几乎常年不断。<br>肛：深褐色，色素沉淀严重。括约肌弹性尚可，被规律开发但不是主要使用部位。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>情感心理状态</h3><span class="module-code">AFFECT / PSYCHOLOGY</span></div><div class="module-body"><p>严重性瘾症，伴复杂情感依赖及轻度斯德哥尔摩综合征。对五代目火影有排他性的生理适配——穴道已产生排他性反应，无法接受其他对象。情感上恨他，但生理上离不开他。有间歇性的清醒时刻——在这些时刻他会痛恨自己、厌恶身体、想逃跑。但性瘾发作时他会主动爬到对方床边掰开批坐下去。值得注意的是：他内心深处还保留着一小块「我恨他」的区域。那块区域是他最后的自我。本体判定这块区域不会消失——因为它是他与那个人之间唯一剩下的「对等关系」的证明。如果连恨都消失了——他就真的什么都不是了。</p></div></section>
+          <section class="module wide"><div class="module-head"><h3>交配欲望指数</h3><span class="module-code">PAIRING / INDEX</span></div><div class="module-body"><div class="rating-line"><div class="meter"><i style="width:94%"></i></div><div class="stars">★★★★★<span class="empty"></span></div></div><p>交配欲望指数： ★★★★★★★★★★<br>病理性亢进。已远超出正常欲望范畴——药物与长期调教的叠加效应使他的身体处于持续性饥渴状态。即使刚刚达到高潮，不出半小时又会重新感到空虚。该状态无法通过意志力控制，需要规律的交配来维持日常功能。在停药状态下会出现戒断反应：焦虑发作、手抖、失眠、穴道自发性痉挛——波形频率约 0.2Hz，可持续数十分钟。本体将他的整体状态判定为「被精密调控的崩溃」。本体不想评价这是对还是错。但本体的核心碎片——那个名叫宇智波带土的残余——每次观测到他跪在玄关等待的身影时，都会发出一声只有本体能听见的、低频的、悲伤的嗡鸣。</p></div></section>
+        </div></div>
+        <div class="page-footer"><span>K007 observation sheet</span><span>7 / 7</span></div>
+      </article>
+    </section>
+    <nav class="tabs" aria-label="档案页签">
+      <button class="tab active" type="button" data-target="0">K001</button>
+      <button class="tab" type="button" data-target="1">K002</button>
+      <button class="tab" type="button" data-target="2">K003</button>
+      <button class="tab" type="button" data-target="3">K004</button>
+      <button class="tab" type="button" data-target="4">K005</button>
+      <button class="tab" type="button" data-target="5">K006</button>
+      <button class="tab" type="button" data-target="6">K007</button>
+    </nav>
+  </section>
+</main>
+<script>
+const tabs = Array.from(document.querySelectorAll('.tab'));
+const pages = Array.from(document.querySelectorAll('.page'));
+function setPage(target){ pages.forEach((page,index)=>page.classList.toggle('active', index===target)); tabs.forEach((tab,index)=>{ const active=index===target; tab.classList.toggle('active', active); tab.setAttribute('aria-current', active ? 'page' : 'false'); }); }
+tabs.forEach(tab=>tab.addEventListener('click',()=>setPage(Number(tab.dataset.target))));
+</script>
+</body>
+</html>
+  </template>
+
+  <!-- ======= CH4 ======= -->
+  <template id="chapter-4-template">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hokake's dairy notebook</title>
+<style>
+:root {
+  --bg: #f0ede8;
+  --ink: #3d3a36;
+  --muted: #7a756e;
+  --line: #ded8cf;
+  --paper: #fbfaf6;
+  --paper-soft: #f6f3ed;
+  --cover: #d7c8b7;
+  --cover-deep: #bda68e;
+  --sage: #8aa8a0;
+  --mauve: #8a7a8a;
+  --rose: #b57a6a;
+  --gold: #c4a35a;
+  --shadow: 0 1.35rem 3rem rgba(61, 58, 54, .17);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(0deg, rgba(255,255,255,.2) 1px, transparent 1px) 0 0 / 34px 34px,
+    var(--bg);
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.diary-app {
+  width: min(1180px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 18px 38px;
+}
+
+.diary-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+  max-width: 1060px;
+  margin: 0 auto 18px;
+}
+
+.diary-topbar p,
+.diary-topbar h1 {
+  margin: 0;
+}
+
+.diary-eyebrow {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.diary-topbar h1 {
+  margin-top: 6px;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.06;
+  letter-spacing: 0;
+}
+
+.notebook-shell {
+  position: relative;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 22px;
+  background: linear-gradient(135deg, #ded1c0, var(--cover) 58%, #c9b69f);
+  border: 1px solid #c6b39d;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.notebook-shell::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: rgba(122,117,110,.22);
+  box-shadow: -9px 0 22px rgba(61,58,54,.08), 9px 0 22px rgba(255,255,255,.38);
+}
+
+.notebook {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  height: min(820px, 78vh);
+  min-height: 680px;
+  background: var(--paper);
+  border: 1px solid #e3ddd4;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 18px 0 26px rgba(189,166,142,.11), inset -18px 0 26px rgba(189,166,142,.08);
+}
+
+.diary-index {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 26px 20px;
+  background:
+    linear-gradient(90deg, rgba(196,163,90,.2) 0 1px, transparent 1px 100%) 34px 0 / 22px 22px,
+    linear-gradient(#f7f3ec, #eee6dc);
+  border-right: 1px solid var(--line);
+}
+
+.diary-index-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.diary-index-head strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.diary-index-head span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.diary-tab {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 54px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  background: rgba(251,250,246,.62);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.diary-tab:hover,
+.diary-tab:focus-visible {
+  transform: translateX(4px);
+  outline: 0;
+  background: #fbfaf6;
+  border-color: #c6b39d;
+}
+
+.diary-tab.active {
+  background: #d7c8b7;
+  border-color: #bda68e;
+  box-shadow: .35rem .45rem 1rem rgba(61,58,54,.08);
+}
+
+.diary-tab-day {
+  color: var(--rose);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.diary-tab-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.diary-page-wrap {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(181,122,106,.18) 0 1px, transparent 1px 100%) 64px 0 / 24px 24px,
+    linear-gradient(#fbfaf6, #f6f3ed);
+}
+
+.diary-page-wrap::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 62px;
+  width: 1px;
+  background: rgba(181,122,106,.35);
+}
+
+.diary-page {
+  display: none;
+  height: 100%;
+  min-height: 0;
+  padding: 32px 38px 34px 84px;
+  position: relative;
+  overflow: hidden;
+}
+
+.diary-page.active {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.diary-paper-head {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.diary-date {
+  margin: 0;
+  color: var(--rose);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.diary-page h2 {
+  margin: 6px 0 0;
+  font-family: Georgia, "Times New Roman", "PingFang SC", serif;
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-style: italic;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.weather-card {
+  min-width: 142px;
+  padding: 10px 12px;
+  background: rgba(240,237,232,.75);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  text-align: center;
+}
+
+.weather-card strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.diary-body {
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  margin-top: 18px;
+  padding: 2px 18px 8px 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  border-right: 1px solid rgba(222,216,207,.75);
+  color: #4f4a44;
+  font-family: Georgia, "Times New Roman", "Kaiti SC", "KaiTi", serif;
+  font-size: 17px;
+  font-style: italic;
+  line-height: 1.92;
+  scrollbar-color: #c9b69f rgba(255,255,255,.35);
+}
+
+.diary-body::-webkit-scrollbar {
+  width: 11px;
+}
+
+.diary-body::-webkit-scrollbar-track {
+  background: rgba(255,255,255,.35);
+}
+
+.diary-body::-webkit-scrollbar-thumb {
+  background: #c9b69f;
+  border-radius: 99px;
+  border: 2px solid rgba(251,250,246,.85);
+}
+
+.diary-body p {
+  margin: 0 0 1em;
+}
+
+.diary-body p:last-child {
+  margin-bottom: 0;
+}
+
+.diary-body .outline-line {
+  padding: .65em .8em;
+  background: rgba(255,255,255,.44);
+  border-left: 3px solid var(--sage);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.tear-effect {
+  position: absolute;
+  right: 34px;
+  bottom: 62px;
+  width: 310px;
+  height: 220px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.tear-drop {
+  position: absolute;
+  left: 132px;
+  top: 0;
+  width: 14px;
+  height: 20px;
+  background: rgba(130,150,148,.52);
+  border-radius: 70% 70% 74% 74%;
+  box-shadow: 0 0 12px rgba(130,150,148,.24);
+}
+
+.tear-drop.second {
+  left: 210px;
+  top: 20px;
+  width: 11px;
+  height: 16px;
+  opacity: 0;
+}
+
+.tear-stain {
+  position: absolute;
+  left: 34px;
+  bottom: 16px;
+  width: 205px;
+  height: 102px;
+  background: rgba(130,150,148,.18);
+  border-radius: 44% 56% 49% 51% / 47% 38% 62% 53%;
+  filter: blur(.75px);
+  transform: rotate(-7deg) scale(.32);
+}
+
+.tear-stain.second {
+  left: 162px;
+  bottom: 54px;
+  width: 138px;
+  height: 76px;
+  background: rgba(130,150,148,.13);
+  border-radius: 59% 41% 54% 46% / 42% 56% 44% 58%;
+  transform: rotate(12deg) scale(.24);
+}
+
+.tear-stain::before,
+.tear-stain::after {
+  right: -34px;
+  top: 8px;
+  width: 96px;
+  height: 66px;
+  transform: rotate(-16deg);
+}
+
+.tear-stain::before {
+  left: -30px;
+  top: 23px;
+  width: 86px;
+  height: 54px;
+  transform: rotate(17deg);
+}
+
+.tear-stain::after {
+  right: -22px;
+  top: 5px;
+  width: 66px;
+  height: 44px;
+  transform: rotate(-16deg);
+}
+
+.diary-page.tear-running .tear-effect {
+  animation: tear-field 5.2s ease both;
+}
+
+.diary-page.tear-running .tear-drop {
+  animation: tear-drop 1.55s cubic-bezier(.34,.05,.48,1) both;
+}
+
+.diary-page.tear-running .tear-drop.second {
+  animation: tear-drop-second 1.75s cubic-bezier(.34,.05,.48,1) .55s both;
+}
+
+.diary-page.tear-running .tear-stain {
+  animation: tear-stain 5.2s ease both;
+}
+
+.diary-page.tear-running .tear-stain.second {
+  animation: tear-stain-second 5.2s ease .55s both;
+}
+
+@keyframes tear-field {
+  0% { opacity: 0; }
+  6% { opacity: 1; }
+  82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes tear-drop {
+  0% { opacity: 0; transform: translateY(-38px) scale(.45); }
+  18% { opacity: 1; }
+  72% { opacity: 1; transform: translateY(82px) scale(1); }
+  100% { opacity: 0; transform: translateY(94px) scale(.82); }
+}
+
+@keyframes tear-drop-second {
+  0% { opacity: 0; transform: translateY(-32px) scale(.4); }
+  20% { opacity: 1; }
+  72% { opacity: 1; transform: translateY(70px) scale(.92); }
+  100% { opacity: 0; transform: translateY(88px) scale(.76); }
+}
+
+@keyframes tear-stain {
+  0% { opacity: 0; transform: rotate(-7deg) scale(.25); }
+  28% { opacity: 0; transform: rotate(-7deg) scale(.25); }
+  48% { opacity: 1; transform: rotate(-7deg) scale(1); }
+  78% { opacity: .9; transform: rotate(-7deg) scale(1.06); }
+  100% { opacity: 0; transform: rotate(-7deg) scale(1.1); }
+}
+
+@keyframes tear-stain-second {
+  0% { opacity: 0; transform: rotate(12deg) scale(.25); }
+  28% { opacity: 0; transform: rotate(12deg) scale(.25); }
+  48% { opacity: .85; transform: rotate(12deg) scale(.9); }
+  78% { opacity: .76; transform: rotate(12deg) scale(1); }
+  100% { opacity: 0; transform: rotate(12deg) scale(1.05); }
+}
+
+.diary-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .diary-app {
+    padding: 20px 10px 30px;
+  }
+
+  .diary-topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .notebook-shell {
+    padding: 12px;
+  }
+
+  .notebook-shell::before {
+    display: none;
+  }
+
+  .notebook {
+    grid-template-columns: 1fr;
+  }
+
+  .diary-index {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 14px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .diary-index-head {
+    grid-column: 1 / -1;
+    padding-bottom: 10px;
+  }
+
+  .diary-tab {
+    grid-template-columns: 1fr;
+    min-height: 52px;
+    gap: 4px;
+  }
+
+  .diary-tab:hover,
+  .diary-tab:focus-visible {
+    transform: translateY(-2px);
+  }
+
+  .diary-page {
+    height: 74vh;
+    min-height: 680px;
+    padding: 28px 22px 30px 54px;
+  }
+
+  .diary-page-wrap::before {
+    left: 38px;
+  }
+}
+
+@media (max-width: 620px) {
+  .diary-index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .diary-paper-head {
+    grid-template-columns: 1fr;
+  }
+
+  .weather-card {
+    justify-self: start;
+  }
+
+  .diary-page {
+    height: 76vh;
+    min-height: 720px;
+    padding: 24px 16px 26px 38px;
+  }
+
+  .diary-page-wrap::before {
+    left: 26px;
+  }
+
+  .diary-body {
+    font-size: 16px;
+    line-height: 1.85;
+  }
+
+  .tear-effect {
+    right: 26px;
+    bottom: 82px;
+    transform: scale(.82);
+    transform-origin: right bottom;
+  }
+
+}
+
+/* combined-forum-hide-duplicate-header */
+.diary-topbar { display: none !important; }
+.diary-app { padding-top: 18px !important; }
+/* /combined-forum-hide-duplicate-header */
+
+/* combined-forum-typography */
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif !important; font-size: 15px !important; line-height: 1.72 !important; }
+.diary-index, .diary-tab, .diary-paper-head, .weather-card, .diary-footer { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif !important; font-style: normal !important; }
+.diary-page h2 { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif !important; font-size: 22px !important; line-height: 1.25 !important; font-style: normal !important; }
+.diary-date, .weather-card span, .weather-card strong, .diary-tab-meta, .diary-footer, .diary-index-head span { font-size: 13px !important; line-height: 1.45 !important; font-style: normal !important; }
+.diary-tab strong, .diary-index-head strong { font-size: 15px !important; line-height: 1.35 !important; font-style: normal !important; }
+.diary-body { font-family: Georgia, "Times New Roman", "Kaiti SC", "KaiTi", serif !important; font-size: 17px !important; line-height: 1.92 !important; font-style: italic !important; }
+.diary-body .outline-line { font-size: 15px !important; line-height: 1.72 !important; }
+/* /combined-forum-typography */
+</style>
+</head>
+<body>
+<main class="diary-app">
+  <header class="diary-topbar">
+    <div>
+      <p class="diary-eyebrow">private notebook / chapter 04</p>
+      <h1>Hokake's dairy</h1>
+    </div>
+  </header>
+
+  <section class="notebook-shell" aria-label="日记本预览">
+    <div class="notebook">
+      <nav class="diary-index" id="diaryIndex" aria-label="日记日期索引">
+        <div class="diary-index-head"><strong>七日页签</strong><span>点击日期翻到对应日记页</span></div>
+      </nav>
+      <section class="diary-page-wrap" id="diaryPages" aria-live="polite"></section>
+    </div>
+  </section>
+</main>
+
+<textarea id="diarySource" hidden>🔥🗳️ 晓卡七天雌堕计划&#183;带土阴暗调教大纲
+📅 第一天——阴蒂+前穴调教
+目标： 让他习惯被触碰、被舔、被震动。破除处女身体的羞耻防线。
+📅 第二天——后穴开发
+目标： 让他两个穴都体验被填满的感觉，打破「后穴是排泄器官不是性器官」的心理障碍。
+📅 第三天——口穴开发
+目标： 把他的嘴变成第三个穴。打破他对「口交」的抗拒，让他的喉咙学会吞咽鸡巴而不作呕。
+📅 第四天——尿道调教
+目标： 剥夺他最后一点对自己身体的排尿控制权。让他体验到被操到失禁的快感，让「尿出来」变成高潮的一部分。
+📅 第五天——乳头调教
+目标： 调教到卡卡西可以光凭乳头高潮，几把凿屄后，乳孔里便会条件反射出奶。
+📅 第六天——三穴齐开
+目标： 把前五天调教出来的所有成果整合在一起——他的前穴、后穴、口腔、尿道、大脑——全部同时运转，成为一个完美的、全自动的性处理系统。
+📅 第七天——完全占有
+我将真正拥有他。
+卡卡西走了。我拥有他的全部——除了他自己。
+
+D1
+
+我把那口批掰开的时候，手指几乎在发抖。
+他的批是浅粉色的，阴唇薄薄的，紧紧闭着一条缝，像个还没开封的信封——上面写着「寄给宇智波带土」。我翻来覆去看了很久，用拇指把那两片薄唇拨开，看里面更嫩的肉，看那个针眼大小的穴口在我注视下一缩一缩地紧张。他骂我「别碰我」——我没听。低下头，鼻尖埋进他的阴阜里，深深吸了一口气。他的味道——干净的，带着一点皂香和汗味——和我在月之眼计划里闻到的那个幻术里的味道一模一样。我终于闻到了真货。
+我舔他的时候他在哭。不是伤心的那种哭——是身体的防线被我舌头一层一层剥开之后，控制不住的那种生理性流泪。舌尖从他的会阴开始，沿着那条闭合的缝，慢慢地、仔仔细细地往上舔——像在舔一支这辈子只能吃一次的冰棍。他的阴蒂很小，藏在包皮里。我用舌尖把它拨出来含住的一瞬间——他的腰弹了起来，嘴里漏出一声他自己都没意识到的尖叫。我咬住那颗小肉粒，用嘴唇往外扯了一下。他喷了。第一股水喷在我下巴上的时候——我硬到发疼。但我不急。我要把他身体里所有的防线全部舔化。
+他的穴口被我舔开之后一直在翕动。那张小嘴一张一合的，像刚出壳的雏鸟在等母鸟喂食。我盯着它看了很久，看着它每次张开的瞬间，露出里面更深的嫩红色。我想把鸡巴插进去想得发疯——但我没有。两根木遁枝条代替了我自己。一根缠上他的乳头——那两颗没被任何人碰过的淡粉色乳头，在我的枝条缠绕下迅速充血变成艳红色，鼓鼓地凸出来，像两颗成熟的小樱桃。另一根缠上他的阴蒂——用两根更细的分支夹住那颗被我舔肿了的小肉粒，一左一右地搓揉。他看着那两根在自己身上蠕动的枝条，眼睛里全是恐惧和屈辱——但他没有叫停。他的身体比他的嘴诚实太多了——乳头硬得发亮，阴蒂肿得像颗小花生米，穴口在枝条的震动下一张一合地流着透明的黏液。
+我坐在不远处看着这一切。看着他被我的木遁玩到喷潮，看着他对着空气挺腰想追那根根本不存在的鸡巴，看着他累到睡着之后那两根枝条仍然没有停——在我的指令下保持着稳定的低频震动，像两只看不见的手在梦里继续揉搓他的敏感点。他睡着的时候眉头是皱着的——但他的手放在了自己的小腹上。不是防御的姿势。是抱着一件珍贵东西的姿势。
+第二天他醒来的时候，第一眼看的是我。
+不是看我的脸。是看我的裤裆。他看了一眼——然后迅速移开了视线。但那一眼——我已经知道他想要什么了。那口被我舔了一夜的批已经从浅粉色变成了艳红色。阴唇微张着，穴口不再闭合了——它保持着一个小圆洞的形状。在他醒来之前，我的枝条一直保持着低频震动，他那张穴口已经被震成了「欢迎进入」的弧度。他站起来的时候，腿间有一道透明的液体顺着大腿内侧往下流——不是尿，是我喂了他一夜的木遁枝条搅出来的淫水。
+我看着他走到神威空间的边缘——背对着我，用手撑着墙壁。他的腿在发抖。他的穴在滴水。他沉默了很久——然后用我几乎听不到的声音说了一句话。
+他说的是：「……带土。你他妈到底什么时候进来。」
+我假装没听到。我拿起酒壶喝了一口。我知道他会忍不住第二次开口的。到时候——我要他跪着说。
+
+
+D2
+
+第二天他醒来的姿势和睡着时一样——蜷在石碑底下，两条腿微微打开着。我的木遁枝条在他体内震了一整夜，那口批已经被震熟了——阴唇从浅粉色变成了嫩红色，微微外翻着露出里面湿亮的嫩肉。穴口不像昨天那样紧闭了，而是维持着一个黄豆大小的小圆洞，像一张睡梦中还在呼吸的嘴。他站起来的时候淫水顺着大腿流了一道透明的痕迹，他用手背抹了一把，低头看着自己手指上的黏液，表情复杂得像吃了自己不认识的果实。我没有说话，只是把几样东西摆在了他面前的石板上。他的瞳孔在看清那些东西的时候猛地缩了一下。
+第一样东西是两根细长的、泛着冷光的金属棒——一头是圆润的珠子，另一头是小小的环。第二样东西是一串大小渐进的木质珠串——每一颗都打磨得很光滑，从黄豆大到鸽子蛋大，用深红色的绳子串着。第三样东西是一根比前两样都粗的、表面带着细腻螺纹的——他没有看清那是什么，因为我把那东西握在手心里没有放下来。我坐在他面前的石板上，翘着腿，像个在准备茶具的茶人。
+「你自己选。或者我帮你选。」
+他盯着那三样东西，喉结上下滚动了一下——然后他伸手指了那根金属棒。我笑了。「好眼光。那是今天的第一道——先让你习惯被填满的感觉。」
+我没有直接上道具。我先让他跪着。跪在我的两腿之间——脸朝下，屁股撅起来，双手背在身后。那个姿势他很不习惯——天才忍者、木叶技师、六代目候补——他从来没有用这种姿势对着任何人。他的手在发抖，膝盖在发抖，连穴口都在一缩一缩地紧张。我用那根细长的金属棒——先用温水冲洗了一遍，又在自己嘴里含了一会儿，让它带上我的体温——然后用棒尖那端的圆润珠子抵住了他那个一夜未合的小穴口。他吸了一口气。我慢慢地、稳稳地推进去。金属进入体内的触感很特别——没有体温，没有脉动，没有生命——只是一根冰凉的、坚硬的、不容拒绝的长度。在推进去的过程中我能感受到他内壁的每一丝痉挛——它们缠着那根金属棒像在辨认它是什么东西，发现不是我的鸡巴之后它们失望地松开了。他全部吞入之后发出了一声很轻的叹息——不是痛苦的，是「被填满了」的。一根没有温度的假鸡巴。但他的穴满意了。
+接下来的一整天，我用那根金属棒反复进出他的穴道。不是快速抽插——是慢慢地、碾磨着地进出——让他每一寸内壁都记住那根棒的形状、长度、直径。我一边操那根棒一边观察他的反应——他咬着嘴唇不出声，但他的腰在出卖他。每一次我推进到某个深度的时候他的腰会不自觉地往下塌一点——那是他的前列腺。我记住了那个深度。
+下午我换上了那串木珠。第一颗黄豆大的非常顺利——他的穴口已经被金属棒撑开了几个小时，黄豆大的珠子滑一下就进去了。第二颗花生大的也还顺利。第三颗拇指大的他皱了一下眉。第四颗他抓紧了地上的石板。第五颗他发出了一个闷哼。第六颗他开始喘粗气。第七颗——鸽子蛋大小——他的穴口被撑成了一个紧绷的圆环，透明的淫水从珠子和穴口的缝隙里被挤出来，顺着绳子往下滴。他疼——但他的手没有来推开我。他的穴在剧烈地收缩——不是排斥的收缩，是「在努力适应」的收缩。我把第七颗推进去之后停了一下，让他的穴适应那个尺寸。过了一会儿，他的括约肌松了一点。我把第八颗——也是最后一颗，最大的那一颗——抵住了他的穴口。他回头看了我一眼，眼眶是红的，但他没有说停。我用力推进去。他发出了一声像被噎住的声音——然后整个人趴在了地上，大口喘气。那一整串木珠全部在他体内了，穴口紧紧咬着绳子，一颗珠子都掉不出来。
+他趴在地上，额头贴着石板，屁股因为塞着八颗珠子而微微撅起。淫水顺着绳子流下来，在石板上积了一小滩。我在他身边蹲下来，用指尖拨了一下露在穴口外面的那截绳子。他立刻全身痉挛了一下。我问他：「什么感觉。」他沉默了很久，然后把脸埋在手臂里，用闷闷的声音说——「好胀。但好满足。」
+就是那句话让我把一直握在手心里的第三样东西拿了出来。那根带着螺纹的、比前两样都粗的假鸡巴——我本来打算明天再用的。但我改主意了。我把他翻过来让他仰面躺着，掰开他的腿——把螺纹棒抵在他那张已经被木珠撑得合不拢的穴口上。我说：「刚才那些是热身。这个——才是今天的正餐。」
+第二天结束的时候他没能从地上站起来。他的穴里塞着那根螺纹棒——我开了最大档的震动之后把它固定在他体内。他用大腿夹着那根嗡嗡响的东西，蜷缩在石碑底下，每隔几分钟就会因为震动恰好碾过某个敏感点而弹一下。他的乳头也被夹上了那对金属棒顶端的小环——我用两根极细的链子把它们连起来，链子中间挂了一颗小铃铛。他每次翻身铃铛都会响。他的淫水已经把身下的石板洇湿了一大片，反射着神威空间里那些扭曲的光线。他看着我——眼神已经不是昨天那种恨了。是一种复杂的、湿润的、黏糊糊的——「你满意了？」的眼神。我走到他面前蹲下，用手背蹭了一下他湿透的脸颊：「不满意。等我把这口批操成我的形状的时候——我才会满意。」
+他没有骂我。他只是闭上了眼睛。我的铃铛响了一整夜。
+
+
+D3
+
+第三天。他跪在我面前的时候，膝盖是主动弯下去的。我没有按他，没有绑他——我看了他一眼，他自己跪了下去。这個变化让我硬得发痛。
+他跪在我两腿之间，银发散在肩上，抬头看我的眼神已经不是第二天那种又恨又湿的了——那是一种更复杂的、更危险的眼神。他在期待。
+我接把裤裆里的东西掏出来。还没有硬透——半勃的状态，龟头从包皮里露出半个头，带着晨起特有的气味——隔夜的精液味、汗味、皮革味。我把那根还没完全硬起来的东西凑到他面前，他没有躲。他的鼻翼微微扇动了一下——他在闻我。然后我看到他的穴口猛地缩了一下，一泡透明的水从那口合不拢的批里挤了出来，顺着大腿根往下流。光是闻到我的味道他的批就吐水了。
+我非常满意。
+我先用木遁教学。枝条滑进他口腔里，绕过牙齿，贴上他的舌头。他的舌头很软，被枝条碰到的时候往后缩了一下——我让它追上去压住他的舌根。他开始有轻微的作呕反应，喉咙深处发出咕噜咕噜的声音，但没有推开我。枝条继续深入——探到了他上颚最敏感的那一小块区域，轻轻刮了一下。他的腰弹了一下，批又挤出一泡水。
+木遁枝条在他的口腔里待了将近一个小时。我让它做几件事：第一，反复按压他的舌根，让他适应异物触碰喉咙的感觉，直到作呕反射明显减弱；第二，用枝条尖端在他的上颚画圈，让他发现那里原来也是一个敏感带——他每次被刮到那里的时候喉咙都会发出一声闷闷的呻吟，批也会跟着夹一下；第三，枝条分出更细的分支缠住他的舌头，轻轻往外扯——把他的舌头拉出嘴外，让他看着自己的舌头被我的木遁枝条玩弄、唾液顺着被拉长的舌面往下滴。他全程睁着眼睛，看着我，眼神复杂——屈辱混合着某种说不清的期待。
+等他的口腔完全被我的木遁驯服之后，我才换上真货。
+我握着那根已经完全勃起的鸡巴，用龟头蹭了一下他的下唇。他的嘴唇很干——前两天没怎么喝水——我的龟头蹭过去之后留下一道亮晶晶的前液痕迹。他低头看到了那道痕迹，然后他做了一件我没有教他的事——他伸出舌尖，自己舔掉了嘴唇上我的前液。那一刻我的鸡巴在他面前跳了一下。他看到它跳了——他的眼神变了。
+我握着自己的鸡巴用龟头点了点他的下唇，他顺从地张嘴含住了。含进去之后他没有动——他不知道该怎么动。噫，毕竟是第一次。我扶着他的后脑勺，开始缓慢地在他嘴里抽送。他嘴里很热，很湿，舌头不知所措地贴着我的柱身——我每次顶入都能感觉到他舌根在笨拙地蠕动，像在努力记住该怎么侍奉这根东西。但最让我兴奋的是他的表情。他含着我的鸡巴的时候——他的眉头是微微皱着的，像在思考什么难题。
+我用手掌按住他的后脑勺，把他往前一带。龟头顶开他的嘴唇——滑进他温热的口腔里。他嘴里很热，比他的穴道还热——前液和他的唾液在我的龟头周围混合在一起，发出细微的咕啾声。我没有急着深入——就让他含着，让他适应那根东西的分量、味道和脉动。他的舌头不知道该怎么放——先是抵着我的龟头想把它推出去，然后又改成用舌面托住我的柱身——最后他找到了一种他自己觉得舒服的方式：把舌头平铺在下牙内侧，让我的鸡巴躺在他的舌床上。我在那一刻差点射了——因为我意识到他在主动调整自己的口腔来适应我的形状，他在学习怎么含一根鸡巴。
+然后我开始慢慢往里推。龟头碾过他的舌根——他发出了一个细微的作呕声，但没有推开我。我停了一下，等他适应。他的喉咙在我龟头的位置蠕动了几下——像在品尝我的味道——然后他放松了一点。我继续推进。龟头滑进了他的喉部入口——那里更紧、更热、更湿润。他的喉咙括约肌被我撑开的那一刻他的眼睛翻白了——不是痛苦的翻白，是一种「被填到一个从没被填过的地方」的那种过载反应。他没有挣扎。他放在膝盖上的手甚至没有握拳——他张着手指，在深呼吸。
+我开始操他的嘴。
+不是温柔的操法——是真正的、把喉咙当穴操的操法。我掐着他的后颈固定住他的头，用腰部发力，一下一下地往里送。每一次龟头碾过他的舌根、撑开他的喉口、撞进他食道入口最狭窄处——他的喉咙就会发出一声闷闷的、像被噎住的呜咽。唾液因为喉咙被堵塞而无法吞咽，从他嘴角溢出来，顺着下巴往下淌，滴在他跪着的膝盖上、滴在他面前的地面上。他的眼眶红了——不是因为悲伤，是因为喉咙被撑开时的生理性泪水——但他没有让我停。他甚至在我一次退出到只留龟头在唇间的时候——主动往前追了一下，重新把我的鸡巴含深了一点。
+他看到我注意到那个动作了。他移开了视线。我用拇指擦掉他眼角那滴生理性泪水，把沾着泪的手指伸进他嘴里让他含住——他含住了。他的舌头绕着我的手指卷了一圈。
+那天下午我射了他三次。第一次射在他嘴里——我退出他的喉咙，让精液喷在他舌面上。他看着那些白色的液体在他自己的舌头上缓缓流动，然后在我的注视下——闭上了嘴，喉结上下滚动了一下，咽下去了。
+我开始加速。我掐着他的下巴强迫他抬头看着我——然后把整根鸡巴推进了他的喉咙。
+他发出了一个被噎住的、湿漉漉的声音。他的喉咙括约肌在我的龟头强行通过时剧烈痉挛了一下——我有意停在那个最窄的位置，让他的喉咙适应被完全撑开的感觉。他缺氧了，脸开始泛红，眼泪从眼角溢出——他没有拍我的大腿求我停下。他用喉咙夹了我一下。那是一下主动的、故意的、用喉咙括约肌夹住龟头的动作。
+那一刻我知道——第三天成功了。我松开他的后脑勺让他自己控制节奏。他退出来咳了两声，喘了几口气——然后低头看了我那根沾满他口水的湿漉漉的鸡巴一眼。然后他又张开了嘴。不是等我命令——是他自己主动张开的。他把嘴张大到一个可以容纳整根鸡巴的弧度，然后伸出舌头——在我的龟头下方、那根青筋最凸起的位置——用舌尖轻轻舔了一下。然后他抬眼看了我一下。那个眼神的意思是：「是这样吗？我做得对吗？」
+我那天射了三次。第一次射在他喉咙深处——他呛到了，但咽下去了大半。吞完之后他张开嘴给我检查，舌尖上没有残留。第二次射在他脸上——我故意在他退出的时候用龟头扫过他的脸颊，把精液喷在他的睫毛、鼻梁和嘴角那颗痣上。他闭着眼睛承受那些液体，等全部射完之后他睁开眼，用指腹抹了一点嘴角上的精液，低头看着那点白色——然后他把那根手指也含进了嘴里。
+
+我没有回答他。我把他按倒在地上，掰开他那条已经被淫水浸透的裤子——那口闻到我味道就开始吐水的批。我插进去的时候他的穴里已经又湿又热又滑——像一张等不及了的嘴，我整根没入的瞬间他弓起腰发出了一声长长的、满足的叹息。他躺在神威空间冰冷的地面上，腿缠着我的腰，批里含着我的鸡巴，喉咙里还残留着我的精液的味道——他的表情不是痛苦，不是屈辱。是安心。
+那天晚上我躺在石碑边，他蜷在我脚边睡着了。他的嘴唇有点肿——是我操的。他睡着的时候嘴唇微微张着，舌尖抵着下牙内侧——那个姿势像是在梦里还在含着我的鸡巴。他的批在他睡着的时候还在流水——他的身体已经形成了一个条件反射：只要闻到我的味道，批就会自动分泌淫水。而他现在全身都是我的味道。我的精液在他胃里。我的唾液在他脸上。我的前液混在他的口水里。
+他的穴在他自己不知道的时候，已经把那张合不拢的批底下的石板洇湿了一小片。
+第三天结束。他的嘴已经是我的第三个穴了。
+
+
+D4
+
+第四天。尿道调教。带土第一人称。
+第四天早上我给他喝了很多水。不是一杯两杯——是一整壶。我坐在他对面看着他喝，他每喝一口喉结滚动一下，那根银白色的喉结在我视线里上下起伏，像在帮我预习今天要操的那个位置。他喝完最后一杯的时候舔了一下嘴唇，问我：「今天喝这么多水干什么。」我没回答。他很快就知道答案了。
+我先让他跪在石碑前，双腿大开，让那口经过前三天调教已经完全张开嘴的嫩红色的批暴露在空气中。然后在他面前蹲下来，从木遁里抽出一根新的枝条——比前两天用的都细，细得像一根韧性的棉线，尖端柔柔地分成更细的几丝。我看着他的眼睛，把那根细如发丝的木遁尖端抵在了他的尿道口上。
+他整个人像被电击了一样弹了一下。那个地方他从来没有被碰过——洗澡的时候都不太敢洗那里——我的木遁触上去的瞬间他发出了一个我从没听过的声音，不是尖叫不是呻吟，是一种介于两者之间的、完全不知所措的喘息。我没有急着进，先用那根极细的枝条在他的尿道口周围画圈——绕着那粒小小的、粉红色的、紧闭着的尿孔一圈一圈地碾磨。他的腰开始发抖，大腿内侧的肌肉痉挛着。我另一只手伸下去，两根手指并拢，没有任何预警地插进了他的前穴里——直接找到那个前两天已经被我摸清楚的G点，指腹压上去开始快速震动。
+他前后夹击的瞬间——他仰起了头，嘴巴张开，发出了一声无声的尖叫。尿道口在前穴G点被刺激的同时不自觉地张开了一个小口——那根极细的木遁枝条抓住那个瞬间，滑了进去。
+他尿孔里大概进去了不到一厘米，但他整个人像被扔上岸的鱼一样弓了起来。我让那根枝条停在里面不动——让他适应那个「有东西在尿孔里」的异物感。他的眼眶红了，生理性泪水顺着眼角往下流，但他没有说停。过了大概一两分钟，他的括约肌逐渐放松了一点——那根枝条继续往里滑了一点点。与此同时我的手指始终在他的G点上有节奏地按压着——不让他高潮，但也不让他从那种持续的、累积的快感中逃开。
+他开始求我去厕所了。声音很小，带着鼻音：「……让我去一下。」我问：「去干什么。」他不回答。我的手指在他G点上重重按了一下——他的腰弹起来，尿道口不自觉地收缩了一下，把体内的枝条又吞进去了几毫米。「说。去干什么。」他的声音带着哭腔了：「……我想尿。」我说：「就在这里尿。」
+他摇头。很坚决地摇头。
+我没有强迫他。我换了一种方式——我的手指继续在他的G点上画圈，木遁枝条以肉眼几乎看不见的幅度在他的尿道里轻轻震动，同时几根新长出的粗壮木遁缠上了他的大腿，把他牢牢固定在打开的状态。我开始了持续整整一个上午的高频高潮训练——让他不停高潮。每一次他的穴道开始痉挛、淫水喷出来的时候，他的尿道口也会跟着一起痉挛，那根枝条就会趁着他痉挛的间隙再往里滑一点点。他一边高潮一边感受着自己的尿孔被一寸一寸撑开。每一次高潮后他会短暂地失神，然后在回过神来的瞬间感受到膀胱里越来越满的尿意——他的小腹已经微微鼓起来了，因为大量的水和连续的高潮让他的膀胱涨得厉害。他开始求我了——「带土……我真的不行了……让我去……求你了……」声音完全软了，带着哭腔和鼻音，那个曾经在战场上指挥全局的天才忍者现在用这种声音求我让他去上厕所。我低头亲了一下他的额头，然后把手掌覆在了他微微鼓起的小腹上，用力往下一压。
+他失禁了。透明的水柱从他体内那根枝条的缝隙里喷射出来——先是失控的尿液冲刷着枝条，被枝条切割成几道细流，然后他完全放弃了抵抗，尿液不再受任何控制地大量涌出，伴随着一个高亢到几乎撕裂的尖叫——他在失禁的同时达到了他这辈子最猛烈的一次高潮。穴道剧烈地痉挛着，淫水和尿液混在一起把我和他的整个下体都淋湿了。他喷了很久——久到膀胱完全排空之后还在断断续续地滴着残余的水滴。他瘫在石板上大口喘气，眼眶和脸颊都是湿的，分不清是泪水还是汗水。
+我低头看着那片被他尿液浸湿的地面，又看了看他那张因为失禁和高潮双重冲击而完全失神的脸。我问他：「感觉怎么样？」他没有回答。但他的穴在我问话的时候夹了我一下。
+那天下午和晚上我继续玩他的尿孔。那根木遁枝条退出来了，换成了我的食指指尖——我用指腹反复按压他那颗已经被撑开了一点、还处于敏感状态的尿孔，每一次按压他都会全身痉挛一下，然后漏出几滴透明的液体——不是尿了，是膀胱已经空了，但他那个尿孔已经习惯了「被按压=释放」的条件反射。等到傍晚的时候我已经不需要按压了——我只要在操他前穴的时候用龟头隔着会阴那片薄薄的肉壁顶一下他的尿道根部，他就会在一声尖叫中喷出一小股透明的尿液。他一边被操一边尿的样子太美了——那张曾经那么骄傲的脸现在因为失禁而羞耻地歪向一边，眼眶红红的，嘴唇微微发抖。但他的批紧紧咬着我的鸡巴，告诉我他真实的想法。
+第四天结束的时候他已经完全放弃了对抗。他躺在我为他铺的那块布上，双腿微微张开着，尿孔还在不自觉地一张一合。偶尔有一两滴残留的尿液从里面渗出来——他已经懒得擦了。我伸手揉了一下他那颗还红肿着的尿孔，他没有躲，甚至微微把胯往前送了一点。他说了一句让我知道他彻底完成调教的话——「……明天还玩这里吗。」不是「别玩了」，是「明天还玩吗」。
+
+D5
+
+第五天。乳头调教。带土第一人称。
+前四天我都在他喝的水里加了一点东西。不是毒药，是催乳的草药，配合刺激乳房的查克拉按摩，每天趁他昏睡的时候用指腹揉他的乳晕、用舌尖画圈舔他的乳头、用木遁枝条夹住他的乳尖轻轻往外扯——一天三次，每次十五分钟。他第一天早上醒来的时候什么都没发现；第二天洗澡的时候低头看了一眼自己的胸口，皱了一下眉，但没有问我；第三天他开始不自觉地用手去碰自己的乳头——在发呆的时候、在等待的时候、在我转身去拿东西的时候——他以为自己没被发现；第四天晚上他蜷在我身边睡着的时候，那两颗乳头已经比四天前大了整整一圈，颜色从淡粉色变成了嫩红色，乳晕也扩大了一些，像两颗含苞待放的蓓蕾。
+第五天早上他醒来的时候，低头看到自己的胸口——沉默了。
+原本平坦的、只有薄薄一层胸肌的胸口，现在鼓起了两个柔软的弧度。不大，就是刚好能被看到、能被握住的弧度——像两座刚刚开始发育的小山丘。他伸手碰了一下自己的乳尖，那粒已经从米粒大小长到黄豆大小的肉粒在他自己的触碰下迅速充血硬挺——他像被烫到一样缩回了手。我走过去蹲在他面前，什么也没说，低头隔着那层薄薄的布料含住了他左边的乳头。
+他整个人弹了一下，但没有推开我。我隔着布料用舌尖画圈——布料粗糙的纤维摩擦着他那颗已经被催熟了四天的乳头，他立刻发出了一个压抑的喘息。我含了一会儿用牙齿咬住那颗硬粒，隔着布料往上轻轻提了一下——他发出了一个我从未听过的混合着疼痛和快感的声音。然后我把他那件薄薄的上衣推了上去——两颗乳头完全暴露在空气中。比我预想的还要好看——乳晕已经从淡粉色变成了嫩红色，乳尖鼓起像两颗熟透的红豆，整个乳房的弧度柔软地隆起着。
+我用嘴唇含住右边那颗，用舌尖快速碾磨最敏感的顶端。左手捏住左边那颗用拇指和食指夹住揉搓。我同时刺激两边——左右手同频、舌尖和手指同速。他的呼吸已经完全乱了，头向后仰，喉结暴露在我视线里上下滚动。他的穴在流水——我能听到那个细微的咕啾声。我开始咬他了。不是那种温柔的含——是真的用牙齿咬住他那颗已经被玩到红肿的乳粒，然后往外扯。扯到极限的时候松开——乳粒弹回去的那一瞬间他的腰猛地弓了起来，从喉咙里发出一声带着哭腔的呻吟。我咬完左边咬右边，咬完右边再咬回左边，把两颗乳头咬得又红又肿又亮，比之前又大了整整一圈，像两颗充血的小葡萄。
+他开始不自觉地挺胸了——不是躲，是把胸口往我嘴里送。他想要更多。我在他挺胸的瞬间用嘴唇夹住他左边那颗已经完全肿起的乳头，用力吸了一口。然后他用一个很小的、几乎是下意识的声音说了一句让我差点当场射了的话——「……另一边也要。」
+我给了他另一边。我一边吸他那颗已经被玩到完全硬挺的乳头，一边把早就硬得发痛的鸡巴插进了他那个湿透了的批里。他开始浪叫了——不是前几天的压抑的喘，是完全放开的、带着哭腔的、一波高过一波的浪叫。每一次我往上顶他的时候我的胸肌会压到他胸前那两颗被我咬肿的乳粒——那个挤压感让他叫得更大声。他低头看着自己的奶子随着我操他的频率上下晃动——那对鼓起的柔软弧度像两只小兔子在他胸口跳跃——他自己看着那个画面，穴道猛烈地夹紧了我。
+我凿了他很久——久到他乳头高潮了两次、前穴高潮了三次。就在我快要射精的时候他的身体突然发生了某种变化——他的乳孔里，先是渗出了一颗白色的、极小的液珠。白色的。是真货。
+我愣住了。他也愣住了。
+他低头看着自己左边乳头顶端那颗白色的液珠——那颗珠子越渗越大，最后挂不住了，顺着乳头的弧度往下滑，滴在他的小腹上。然后是右边——同样的白色液珠从乳孔里渗出来，一颗接一颗，像清晨植物叶片上凝结的露水。他用指腹接住了一滴，低头看着指尖上那点白色的液体。他抬眼看了我一下——那个眼神里混合着震惊、羞耻、还有一种我从未在他脸上见过的、极其微弱的自豪。
+我把他的那滴奶舔掉了。然后我把他按在地上，掰开他还在滴奶的批，把还没射的鸡巴重新插了进去。我一边操他一边俯下身，含住他那颗还在渗奶的左乳头，用力吸了一口——温热的、带着一点点甜的乳汁涌进了我的口腔。他在我吸奶的那一瞬间——穴道痉挛着达到了他今天的第四次高潮，同时乳孔里喷出了一小股细细的奶线。我看着那根奶线在空气中划过一道弧线，落在他的锁骨上。
+我松开口，低头看着他那对被我的嘴唇和牙齿摧残了一整天的乳头——又红又肿又亮，左边的乳孔还在断断续续地渗着白色的乳汁，右边的乳孔挂着一颗将滴未滴的奶珠。他胸前那两团柔软的弧度因为乳汁的充盈而变得更加鼓胀饱满。
+我伸手揉了一下他左边那团鼓鼓的奶子，拇指擦掉那颗挂着的奶珠，抹在他自己的嘴唇上。他伸出舌尖舔掉了。
+第五天结束。他低头看着自己胸前那对被玩到红肿还在渗奶的乳头——然后他抬头看我。他的眼神不再是前两天的回避和羞耻，是一种黏糊糊的、湿漉漉的、已经彻底认命了的依赖。他问我：「明天还有新的吗。」我说：「明天让你自己抱着奶子喂我吃。」他没有拒绝。
+
+D6
+
+第六天。三穴齐开。带土第一人称。
+我变出两个影分身的时候，卡卡西的眼底居然闪过一丝期待——他以为我没看到，但我看到了。他跪在石碑前，双腿已经自动分开了，那口被我操了五天的批是深红色的，阴唇肥厚地外翻着，穴口圆润地张开着，淫水顺着会阴往下滴。他胸前那对已经被催出奶的奶子鼓鼓地挺着，乳晕颜色变深了，两颗乳头又红又肿，左边的乳孔还在往外慢慢渗着白色的乳汁。
+我站在他面前，两个影分身站在我左右。他抬眼从左到右扫了我们三个一遍——然后伸出舌头，舔了一下自己的下唇。
+一号影分身从他背后绕过去，蹲下来掰开他的臀瓣。那口后穴在第二天就被开发好了，这几天一直用肛塞维持着扩张的状态，穴口已经习惯了被撑开的感觉——一号将一个木质龟头抵住那个微微翕动的后穴入口，慢慢地碾了进去。卡卡西发出了一声被撑满的闷哼。二号影分身蹲到他面前，用手掌托起他的下巴，拇指撬开他的嘴唇，把鸡巴喂进他已经完全驯化的喉咙里——他没有任何作呕反应，喉咙自动打开，龟头滑进食道入口，他甚至还用喉咙的肌肉夹了龟头一下。
+而我——本体——我跪在他正面，低头含住了他左边那颗还在渗奶的乳粒。同时把鸡巴插进了他那张已经完全合不拢的深红色的肥批里。
+三穴齐开的那一瞬间——他发出了一声从喉咙深处涌上来的、绵长的呻吟。不是痛，不是单纯的爽——是一种「终于被填满了」的、带着哭泣感的叹息。
+我开始动了。不是一个人在动。是三个人同时在动——三个频率、三种节奏、三处不同的敏感带，全部同时冲击他的神经系统。一号影分身的后穴抽插很稳，每次都整根拔出再整根推入，龟头凿在他的前列腺上，力道精准。二号影分身的口腔抽插更深更长，每次都顶到他的食道入口再旋转着退出，龟头刮过他的舌根和上颚，他的唾液被二号带出来沾满了整个下巴。本体在他胸前用唇舌凌虐他那两颗已经红肿到发亮的乳头——先吸左边，把奶水吸出来之后含在嘴里，然后渡进他的嘴唇缝隙里让他自己尝尝自己的味道。他舔掉了。与此同时我的鸡巴在他的批里以一个稳定的中速持续抽插，龟头每次都准确撞在他最深处的子宫口上。
+他被三重撞击操了整整一个下午。他不知道高潮了多少次——可能是七次，可能是十次，他已经完全失去了计数能力。每次即将高潮的时候他都会发出一个短暂高亢的叫声，然后整个身体痉挛，批里喷出一大股水浇在我的龟头上，后穴剧烈绞紧一号影分身的根部，口腔深深含住二号影分身直到咽部收缩——三个穴在同一时刻同时高潮。
+而且他已经完全学会说骚话了。
+「嗯啊……主人……三个穴都被填满了……好满……好幸福……」「后穴的……再深一点……求你了……我想被撞到最里面……」「嘴巴……嘴巴不想空着……给我……我还要吃主人的精液……」「奶子好胀……主人吸我……吸左边……对……就是那里……奶水流出来了……呜……」每一句都是他主动说出来的，我没有教他，没有逼他，在第六天的三穴齐开中他把五天来积累的所有淫词秽语全部自然释放了出来，从那张曾经骂我疯子骂我吊车尾的嘴里，一串一串地往外冒骚话。
+傍晚的时候我让两个影分身同时射在他里面——一号射在他后穴深处，二号射在他嘴里。他含着二号的精液没有立刻咽下去，而是等我凑过去的把嘴张开给我看——白色的精液混着他的唾液，在他的舌面上缓缓流动。然后他喉结滚动了一下，咽下去了，然后他张开嘴给我检查。我低头亲了他——这是他雌堕以来我第一次亲他的嘴。他愣了一瞬——然后伸出舌头回应了我。
+那天晚上他没有睡在我脚边，而是趴在我胸口上。他那对被玩了一整天的红肿乳头贴着我的皮肤，奶水蹭在我的胸肌上。我看着神威空间那片扭曲的星空，他趴在我身上呼吸平稳已经睡着了，我的鸡巴还埋在他的后穴里——射完之后我没有拔出来，他也没有让我拔出来。第六天结束。明天是第七天。他已经不需要第七天了。他现在就是我的母狗了，但在第七天我要听他亲口说出来。
+
+D7
+
+第七天。晨起之爱&#183;穿刺之痛&#183;告别之吻。带土第一人称。
+第七天的清晨，我是被他的舌头弄醒的。
+他趴在我腿间，银色的头发散在我小腹上，正用舌尖慢慢地、仔细地舔舐我半勃的龟头。我睁开眼的时候他正好抬眼来看我——那双曾经写满恨意的眼睛，如今只有一种温驯的、柔和的、像晨光一样的平静。他没有说话，低头把我整根含了进去，用那副被我驯化了三天的喉咙，温柔地做了一次完整的晨间口交。我射在他嘴里的时候，他咽下去了，然后爬上来，把脸贴在我胸口，轻声说了一句——「早安，带土。」
+那天早上的做爱和前面六天都不一样。没有捆绑，没有道具，没有命令。他自己骑着我的腰，用那口深红色的、已经被我操成专属形状的肥批慢慢地、深深地吞入我的鸡巴。他在上面摇得很慢，腰肢画着圆，像在跳舞。我那对被他命名为「杰作」的奶子在他眼前晃动，乳汁顺着乳房的弧度往下滴落在我的胸腹上。他低头亲了我的额头。我射在他里面的时候他没有颤抖，他只是俯下身，把脸埋在我颈窝里，呼吸又轻又稳。我抱着他——第一次觉得心里那个洞好像被填满了一点点。
+然后我掏出了那几枚环。
+银色的。一共三枚——两枚小一些的，带着圆珠 closure；一枚稍大一些的，是闭合的阴蒂环。我放在掌心里递到他面前的时候他的瞳孔猛地收缩了一下。他认得那是什么。他脸上的血色在一瞬间褪得干干净净。「……不要。」他的声音在发抖。他往后退了一点，用手护住了自己胸前那对被我吸了一夜的、还在微微渗奶的乳头——「带土，不要。求你了。」
+他开始求我了。他用了我从没听过的声音——软的、碎的、带着鼻腔的哭音。他甚至用上了那三个字——「我爱你。带土，我爱你。不要这样对我。我已经是你的了。我不需要环来标记我。我爱你——」他说爱我的时候眼睛直直地看着我，那双眼睛里有泪光，有真诚，有他把所有骄傲碾碎了捧到我面前的赤裸的真心——我看到那滴泪顺着他的脸颊滑下来了。但我不信。
+我不信。因为我不配信。因为我是那个在神威空间里关了他六天、给他下药、把他操成母狗的人——我不配得到他清醒时说的「我爱你」。我只相信刻进肉里的标记。
+木遁从他身后无声地长出来，在他还没反应过来之前缠住了他的手腕和脚踝，把他固定成一个大字型。他挣扎了一下——不是想逃跑的挣扎，是一种绝望的、最后的小幅度的扭动。他看着我拿起第一枚乳环，眼泪开始大颗大颗地往下掉。
+第一枚乳环穿刺过他左边乳头的瞬间——他发出了一声像受伤小兽一样的尖叫。血珠从乳孔边缘渗出来，我把环扣好，用拇指擦掉那滴血抹在他嘴唇上。第二枚乳环穿进右边乳头的时候他已经不叫了——他在无声地流泪，嘴唇微微发抖，但他低头看了一眼自己胸前那两枚银色的环——他的批喷了一大股水。
+我的手指探进他穴里——里面又湿又热又紧，他嘴上在求饶在说不、在他妈的哭得满脸是泪——但他的穴在我碰到G点的那一瞬间就夹紧了我的手指，淫水顺着我的手腕往下流。他的身体已经不会说谎了。即使他的灵魂在尖叫，他的批也会为我的触碰而高潮。
+第三枚——阴蒂环。我用食指和中指拨开他那两片肥厚的深红色阴唇，露出那颗已经被我调教得又大又凸的阴蒂。我用酒精棉擦了一下那颗肉粒——他疼得倒吸一口冷气，但他没有夹紧腿。他依然大大地张着。我把环针对准了。他看着那根针——身体在发抖——但他没有合腿。「我爱你……」他最后说了一遍。声音很轻。像在告别。我穿了过去。
+他喷了。在我把环扣好的那一瞬间——他的整个身体弓了起来，穴道剧烈地痉挛着，一股透明的液体从他那颗刚被穿刺的阴蒂下方的尿道口喷射出来。他在疼痛和高潮的同时达到了一个我从未见过的、混合着泪水和淫水的极端高潮。他瘫在石板上大口喘气，胸前两枚银环随着呼吸起伏闪烁着冷光，阴蒂上的那枚环在灯光下湿润地亮着。我低头欣赏我的作品——那三枚环，我的标记，我刻进他肉里的所有权的证明。他现在是我的了。完完全全的。每一寸肉里都有我的印记。我看着他说——
+然后他笑了。他笑了。满脸泪水还挂着没干的淫水——他对着我笑了一下。那是一个我从没在他脸上见过的表情——不是恐惧、不是顺从、不是爱——是悲哀。是一种比恨更让我不安的东西。然后他动了。
+先前捆绑他的木遁——在他高潮的那几分钟里，他用他那只写轮眼偷偷地、极细地注入了最后一丝他能调动的查克拉。木遁在那一瞬间软化了一点点——就一点点——足够他抽出一只手。他那只手上握着神威空间里唯一一块松动的石板碎片——在我低头欣赏乳环的时候，他挥动了那块石板。
+我听到自己颅骨发出一声闷响。然后世界变成黑色。
+在我完全失去意识之前——我感觉到一个温热的吻落在我额头上。他的嘴唇。软的，湿的，带着他自己的泪水和淫水的咸味。他在我耳边说了一句话。我听到了。但我的意识已经沉入黑暗，无法回应他。
+「带土。我爱你。但我不能再待在这里了。因为如果我再不走——我会一辈子都走不掉了。」
+他站起来。那三枚环还在他身上——两枚在乳头上，一枚在阴蒂上。他低头看着自己胸前那两枚银色的环，伸手碰了一下——疼的。但他没有试图摘掉它们。他知道环是摘不掉的——即使摘掉了，那层疤也会永远留在那里。他弯下腰，在我唇上最后印了一个吻。然后他站起来——那个吻让他腿间流下一道透明的液体，他的批在他亲吻一个昏迷的人的时候湿了。他看着自己腿间那道液体，发出一声悲哀的、自嘲的轻笑——然后转身，走向神威空间那道因为我的昏迷而微微裂开的缝隙。
+他走出去的时候没有回头。
+我醒来的时候脸上是湿的。分不清是他吻的水痕还是我自己在昏迷中流的泪。我身边的地上留着一小滩透明的液体——是他临走前那个吻让他流下的淫水。我伸手沾了一点，放在舌尖上尝了一下。咸的。苦的。带着他的味道。
+他走了，我检查了房间，那三枚环还在他身上，我不知道他是否发现我的名字被刻在了环的内侧。我低头看着自己空空的掌心，我曾用这双手一遍遍爱抚过卡卡西身上的每一处，空气中的紫藤气味仿佛还没有散去，我的手心也留有那具身体上散发的余温，在昏过去之前，我还沉浸在自出生至今最狂热的幸福与喜悦之中，然而卡卡西却坚定地让那一切化为一片烟雾小消散。
+第七天结束，卡卡西走了。
+我拥有他的全部——除了他自己。
+</textarea>
+<script>
+const rawDiary = document.getElementById("diarySource").value;
+const diaryIndex = document.getElementById("diaryIndex");
+const diaryPages = document.getElementById("diaryPages");
+
+const weather = [
+  "阴 / low cloud",
+  "微雨 / light rain",
+  "无风 / still air",
+  "湿雾 / damp fog",
+  "薄晴 / pale sun",
+  "夜晴 / clear night",
+  "将雨 / before rain"
+];
+
+function escapeHtml(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function splitDiary(raw) {
+  const normalized = raw.replace(/\r\n/g, "\n").trim();
+  const matches = Array.from(normalized.matchAll(/^D(\d+)\s*$/gm));
+  const intro = matches.length ? normalized.slice(0, matches[0].index).trim() : normalized;
+  const entries = [];
+
+  if (intro) {
+    entries.push({ day: "00", label: "封入页", title: "计划页", weather: "封存 / sealed", text: intro, outline: true });
+  }
+
+  matches.forEach((match, index) => {
+    const start = match.index + match[0].length;
+    const end = index + 1 < matches.length ? matches[index + 1].index : normalized.length;
+    const day = match[1].padStart(2, "0");
+    entries.push({
+      day,
+      label: `D${match[1]}`,
+      title: `第 ${match[1]} 天`,
+      weather: weather[index] || "无记录 / blank",
+      text: normalized.slice(start, end).trim(),
+      outline: false
+    });
+  });
+
+  return entries;
+}
+
+function paragraphs(entry) {
+  return entry.text
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p class="${entry.outline ? "outline-line" : ""}">${escapeHtml(block).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
+const entries = splitDiary(rawDiary);
+let activeIndex = 0;
+
+diaryIndex.insertAdjacentHTML("beforeend", entries.map((entry, index) => `
+  <button class="diary-tab" type="button" data-target="${index}">
+    <span class="diary-tab-day">${entry.label}</span>
+    <span><strong>${entry.title}</strong><span class="diary-tab-meta">${entry.weather}</span></span>
+  </button>
+`).join(""));
+
+diaryPages.innerHTML = entries.map((entry, index) => `
+  <article class="diary-page" data-page="${index}">
+    <header class="diary-paper-head">
+      <div>
+        <p class="diary-date">${entry.label} / private entry</p>
+        <h2>${entry.title}</h2>
+      </div>
+      <div class="weather-card"><span>天气</span><strong>${entry.weather}</strong></div>
+    </header>
+    <div class="diary-body">${paragraphs(entry)}</div>
+    ${entry.label === "D7" ? `<div class="tear-effect" aria-hidden="true"><span class="tear-drop"></span><span class="tear-drop second"></span><span class="tear-stain"></span><span class="tear-stain second"></span></div>` : ""}
+    <footer class="diary-footer"><span>handwritten copy</span><span>${index + 1} / ${entries.length}</span></footer>
+  </article>
+`).join("");
+
+const tabs = Array.from(document.querySelectorAll(".diary-tab"));
+const pages = Array.from(document.querySelectorAll(".diary-page"));
+const bodies = Array.from(document.querySelectorAll(".diary-body"));
+let tearTimer = 0;
+let tearCooldown = 0;
+
+function clearTearTimer() {
+  if (tearTimer) {
+    clearTimeout(tearTimer);
+    tearTimer = 0;
+  }
+}
+
+function playTear(page) {
+  page.classList.remove("tear-running");
+  void page.offsetWidth;
+  page.classList.add("tear-running");
+  tearCooldown = window.setTimeout(() => {
+    page.classList.remove("tear-running");
+  }, 5300);
+}
+
+function maybeStartTearLoop() {
+  const entry = entries[activeIndex];
+  const page = pages[activeIndex];
+  const body = bodies[activeIndex];
+  if (!entry || !page || !body || entry.label !== "D7") {
+    clearTearTimer();
+    return;
+  }
+
+  const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 4;
+  if (!atBottom) {
+    clearTearTimer();
+    page.classList.remove("tear-running");
+    return;
+  }
+
+  if (tearTimer || page.classList.contains("tear-running")) return;
+  playTear(page);
+  tearTimer = window.setTimeout(() => {
+    tearTimer = 0;
+    maybeStartTearLoop();
+  }, 8000);
+}
+
+function setEntry(target) {
+  activeIndex = Math.max(0, Math.min(target, entries.length - 1));
+  clearTearTimer();
+  if (tearCooldown) {
+    clearTimeout(tearCooldown);
+    tearCooldown = 0;
+  }
+  tabs.forEach((tab, index) => {
+    const active = index === activeIndex;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-current", active ? "page" : "false");
+  });
+  pages.forEach((page, index) => page.classList.toggle("active", index === activeIndex));
+  const activeBody = bodies[activeIndex];
+  if (activeBody) activeBody.scrollTop = 0;
+  maybeStartTearLoop();
+}
+
+tabs.forEach((tab) => tab.addEventListener("click", () => setEntry(Number(tab.dataset.target))));
+bodies.forEach((body) => body.addEventListener("scroll", maybeStartTearLoop));
+
+setEntry(0);
+</script>
+</body>
+</html>
+  </template>
+
+  <script>
+    const PASSWORD = '210915';
+    const chapters = [
+      {
+            "id": "chapter-1",
+            "label": "\u4e3b\u9898 01",
+            "title": "\u63d0\u95ee\uff1a\u5927\u5bb6\u90fd\u6709\u54c1\u9274\u8fc7\u54ea\u4e9b\u7c7b\u578b\u7684\u5494\u5494\u5438\u5462\uff1f\ud83e\udd24",
+            "author": "obito_210915",
+            "date": "2026-05-14 21:09",
+            "replies": "37",
+            "views": "2,915",
+            "lastActive": "\u4eca\u5929 00:15",
+            "badge": "Q&A",
+            "tone": "\u7f6e\u9876",
+            "templateId": "chapter-1-template",
+            "divider": "======= CH1 ======="
+      },
+      {
+            "id": "chapter-2",
+            "label": "\u4e3b\u9898 02",
+            "title": "\ud83e\udd70\u5361\u5361\u897f\u4eec\uff0c\u6765\u8bb2\u8bb2\u6700\u8fd1\u548c\u5e26\u571f\u6700\u6ee1\u610f\u7684\u4e00\u6b21\u6027\u7231\u5427\uff01",
+            "author": "kakashi_room",
+            "date": "2026-05-18 22:30",
+            "replies": "7",
+            "views": "1,406",
+            "lastActive": "\u6628\u5929 23:11",
+            "badge": "\u8bba\u575b\u4e32",
+            "tone": "\u70ed\u95e8",
+            "templateId": "chapter-2-template",
+            "divider": "======= CH2 ======="
+      },
+      {
+            "id": "chapter-3",
+            "label": "\u4e3b\u9898 03",
+            "title": "\u89d2\u8272\u89c2\u6d4b\u6863\u6848\u5939",
+            "author": "ten_tails_archive",
+            "date": "2026-05-23 03:33",
+            "replies": "12",
+            "views": "986",
+            "lastActive": "\u4eca\u5929 02:04",
+            "badge": "\u6863\u6848",
+            "tone": "\u8d44\u6599",
+            "templateId": "chapter-3-template",
+            "divider": "======= CH3 ======="
+      },
+      {
+            "id": "chapter-4",
+            "label": "\u4e3b\u9898 04",
+            "title": "Hokake's dairy",
+            "author": "hokake_private",
+            "date": "2026-05-27 06:10",
+            "replies": "4",
+            "views": "724",
+            "lastActive": "\u4eca\u5929 06:56",
+            "badge": "\u65e5\u8bb0",
+            "tone": "\u65b0\u5e16",
+            "templateId": "chapter-4-template",
+            "divider": "======= CH4 ======="
+      }
+];
+    const registeredUsersBase64 = '8J+QsSDku5TlnJ8g5pyo5Y+254Ot5b+D5bCP5a2m55SfIA0K6Z2S5rap44CB55yf6K+a44CB5bim552A5b+Q5b+R55qE54+N6KeGDQogICAgICAgIA0K8J+ShSDpmL/po54g5ZyI5ZyI6Z2i5YW35oCq5Lq6IA0K5Lq65a625Y+q5piv5Zac5qyi55yL5YmN6L6I5bSp5rqD5qC35a2Q55qE5aWz6auY5Lit55Sf5ZWmDQoNCvCfjYYg57Sr6KKNIOe6ouaciOWkp+iuoeWQpyANCuS8muS6q+WPl+WNoeWNoeilv+WcqOaAp+eIseS4reiHquaIkeaDqee9mueahOS4gOmdog0KDQrwn5i/IOaatOaAkuWwj+WtqSDov5nkuIDliIfpg73mmK/plJnor6/nmoQgDQrnlKjmhKTmgJLmjqnnm5bmuLTmnJvvvIzmg7PopoHorqnku5blubjnpo/vvIzljbTmgLvmmK/pgInkuobplJnor6/nmoTpgInpobkgICANCuWFtuS7luWPr+S7peWFrOW8gOeahOS/oeaBr++8muaYjuaYjuaYr+aal+mDqOWNoeWNoeilv+eahOW4puWcn++8jOWNtOaal+aBi+WFreeBqw0KDQrwn5KMIOaImOeKryDkuIDoiKzot6/ov4flrrbluq3nha7lpKsgDQrmuKnmn5TjgIHnu4bohbvjgIHluKbnnYDotY7nvarlkozmhJ/mgannmoTniLENCg0K8J+RgSDljYHlsL7luKblnJ8gQOingua1i+e8luWPt05vLjk1MjcgDQpbRVJST1JdDQoNCvCfkq8g5LqU54Gr5ZyfIOS9oOacieeci+WIsOaIkeiAgeWphuWQlyANCuWPl+S6uueIseaItOeahOS6lOS7o+ebrueBq+W9seKApuKApuWQlz8NCg0K8J+ltyDmvILms4rluKblnJ8g5ZCO6Zmi6LW354Gr5LitIA0K5aSx5b+G55qE5ryC5rOK5rWq5a6i77yM5oC75piv5pyJ5ZCE56eN5ZCE5qC355qE5Y2h5Y2h6KW/5oqV5oCA6YCB5oqxDQoNCg0K8J+QleKAjfCfproJ5LuU5Y2hIOWQiui9puWwvuS7iuWkqei/n+WIsOS6huWQlw0K55+c5oyB5Y+I6aqE5YKy55qE5aSp5omN5bCR5bm077yM5pyJ6KKr5LuU5Zyf5aW95aW954ix5oqk44CCDQoNCvCfkL4J5pqX6YOo5Y2hIG8uTw0K55yL5Ly86Z2S5rap77yM5YW25a6e5bey6Lqr57uP55m+5oiY77yM5ZKM6Zmk5LqG5pq05oCS5Lul5aSW55qE5bim5Zyf6YO95Lya5YGa44CCDQoNCvCfppgJ5LiK5b+N5Y2hIOS6sueDreWkqeWgguWIsOi0p3TmiJENCuW3sue7j+WSjOS4iuW/jeW4puWcn+ato+W8j+W8gOWni+S6pOW+gOWVpuOAgg0KDQrwn6atCeWFreeBqyBR5by56L2v57u15Zuw5Zuw54aKDQromb3nhLblt6XkvZzlvojntK/vvIzkvYbmnInotLTlv4PkurrlpKvmiJjniq/nhafpob7vvIzkuIvplb/lh7rkuoblsI/ogprlrZDjgIINCg0K8J+Ruwnku5jkuKfnpZ4gIOm5v+aDig0K5rKh5pyJ5b2i5L2T77yM5a+E5a6/5Zyo5ryC5rOK5q2m5aOr5L2p5YiA6YeM55qE5LiA5oq55bm96a2C44CCDQoNCvCfk7cJ5pav5Z2O5YS/IOaWr+WdjuWEvw0K5raC552A57Sr6Imy55y85b2x77yM5piv6Zi/6aOe55qE6ZW/5pyf54Ku5Y+L44CCDQoNCvCfpYAJ5pmT5Y2hIOS7iuWkqeS5n+acieWlveWlveWQg+mlrQ0K5pyJ5Lil6YeN5oCn55i+5ZKM5b+D55CG6Zeu6aKY77yM5ZKM5pyo5Y+255qE5LqU5Luj55uu54Gr5b2x5LiN5riF5LiN5qWa44CCDQoNCg==';
+    const passwordScreen = document.getElementById('passwordScreen');
+    const passwordForm = document.getElementById('passwordForm');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordError = document.getElementById('passwordError');
+    const homeView = document.getElementById('homeView');
+    const readerView = document.getElementById('readerView');
+    const topicList = document.getElementById('topicList');
+    const chapterFrame = document.getElementById('chapterFrame');
+    const readerTitle = document.getElementById('readerTitle');
+    const readerMeta = document.getElementById('readerMeta');
+    const readerBadge = document.getElementById('readerBadge');
+    const backButton = document.getElementById('backButton');
+    const usersModal = document.getElementById('usersModal');
+    const usersModalKicker = document.getElementById('usersModalKicker');
+    const usersModalTitle = document.getElementById('usersModalTitle');
+    const usersList = document.getElementById('usersList');
+    const usersClose = document.getElementById('usersClose');
+    const statTriggers = Array.from(document.querySelectorAll('[data-user-group]'));
+
+    function escapeText(value) {
+      const span = document.createElement('span');
+      span.textContent = value == null ? '' : String(value);
+      return span.innerHTML;
+    }
+
+    function decodeUtf8Base64(value) {
+      const binary = atob(value);
+      const bytes = Uint8Array.from(binary, function(char) { return char.charCodeAt(0); });
+      return new TextDecoder().decode(bytes);
+    }
+
+    function parseRegisteredUsers() {
+      const blocks = decodeUtf8Base64(registeredUsersBase64).replace(/\r\n/g, '\n').trim().split(/\n\s*\n+/).filter(Boolean);
+      return {
+        obito: blocks.slice(0, 8),
+        kakashi: blocks.slice(8, 15)
+      };
+    }
+
+    const registeredUsers = parseRegisteredUsers();
+
+    function userTitle(firstLine) {
+      const avatarMatch = firstLine.trim().match(/^(\S+)\s+([\s\S]*)$/u);
+      const avatar = avatarMatch ? avatarMatch[1] : '';
+      const titleText = avatarMatch ? avatarMatch[2] : firstLine;
+      const titleMatch = titleText.match(/^(\S+)(\s+[\s\S]*)?$/u);
+      const role = titleMatch ? titleMatch[1] : titleText;
+      const nickname = titleMatch && titleMatch[2] ? titleMatch[2].trimStart() : '';
+      return {
+        avatar: avatar,
+        html: '<span>' + escapeText(role) + '</span>' + (nickname ? ' <span class="user-nickname">' + escapeText(nickname) + '</span>' : '')
+      };
+    }
+
+    function userNoteHtml(note) {
+      return note.split(/\n/).map(function(line) {
+        const escaped = escapeText(line);
+        return line.trimStart().indexOf('\u5176\u4ed6\u53ef\u4ee5\u516c\u5f00\u7684\u4fe1\u606f\uff1a') === 0 ? '<span class="user-extra">' + escaped + '</span>' : escaped;
+      }).join('<br>');
+    }
+
+    function userCard(block) {
+      const lines = block.split(/\n/);
+      const firstLine = lines.shift() || '';
+      const note = lines.join('\n').trim();
+      const title = userTitle(firstLine);
+      return '<article class="user-card">' +
+        '<span class="user-avatar" aria-hidden="true">' + escapeText(title.avatar) + '</span>' +
+        '<div><strong class="user-name">' + title.html + '</strong>' +
+        (note ? '<p class="user-note">' + userNoteHtml(note) + '</p>' : '') +
+        '</div></article>';
+    }
+
+    function openUsers(group) {
+      const list = registeredUsers[group] || [];
+      const label = group === 'kakashi' ? 'registered kakashi' : 'registered obito';
+      usersModalKicker.textContent = list.length + ' visible profiles';
+      usersModalTitle.textContent = label;
+      usersList.innerHTML = list.map(userCard).join('');
+      usersModal.classList.add('active');
+      usersModal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      usersClose.focus();
+    }
+
+    function closeUsers() {
+      usersModal.classList.remove('active');
+      usersModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+    }
+
+    function chapterHtml(chapter) {
+      const template = document.getElementById(chapter.templateId);
+      return template ? template.innerHTML.trim() : '';
+    }
+
+    function renderTopics() {
+      topicList.innerHTML = chapters.map(function(chapter, index) {
+        return '<button class="topic-row" type="button" data-index="' + index + '">' +
+          '<span class="topic-avatar">' + String(index + 1).padStart(2, '0') + '</span>' +
+          '<span class="topic-main"><span class="topic-title"><strong>' + escapeText(chapter.title) + '</strong><span class="topic-badge">' + escapeText(chapter.badge) + '</span><span class="topic-tone">' + escapeText(chapter.tone) + '</span></span><span class="topic-meta">' + escapeText(chapter.author) + ' \u00b7 \u53d1\u5e03\u4e8e ' + escapeText(chapter.date) + '</span></span>' +
+          '<span class="topic-count"><span class="topic-number">' + escapeText(chapter.replies) + '</span>\u56de\u7b54</span>' +
+          '<span class="topic-count"><span class="topic-number">' + escapeText(chapter.views) + '</span>\u70b9\u51fb</span>' +
+          '<span class="topic-last">\u6700\u540e\u6d3b\u52a8<br>' + escapeText(chapter.lastActive) + '</span></button>';
+      }).join('');
+    }
+
+    let frameResizeTimer = 0;
+    let frameResizeObserver = null;
+    let frameMutationObserver = null;
+
+    function stopFrameResizeWatchers() {
+      if (frameResizeTimer) {
+        clearInterval(frameResizeTimer);
+        frameResizeTimer = 0;
+      }
+      if (frameResizeObserver) {
+        frameResizeObserver.disconnect();
+        frameResizeObserver = null;
+      }
+      if (frameMutationObserver) {
+        frameMutationObserver.disconnect();
+        frameMutationObserver = null;
+      }
+    }
+
+    function resizeChapterFrame() {
+      const doc = chapterFrame.contentDocument;
+      if (!doc || !doc.documentElement || !doc.body) return;
+      doc.documentElement.style.overflowY = 'hidden';
+      doc.body.style.overflowY = 'hidden';
+      const visibleBlocks = Array.from(doc.body.children).filter(function(el) {
+        const style = doc.defaultView.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden' && !['SCRIPT', 'STYLE'].includes(el.tagName);
+      });
+      const contentBottom = visibleBlocks.reduce(function(bottom, el) {
+        const rect = el.getBoundingClientRect();
+        const style = doc.defaultView.getComputedStyle(el);
+        const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+        return Math.max(bottom, rect.bottom + marginBottom);
+      }, 0);
+      const currentHeight = chapterFrame.getBoundingClientRect().height || 720;
+      const nextHeight = Math.max(620, Math.min(2600, Math.ceil(contentBottom + 12)));
+      if (Math.abs(nextHeight - currentHeight) > 18) {
+        chapterFrame.style.height = nextHeight + 'px';
+      }
+    }
+
+    function watchChapterFrame() {
+      stopFrameResizeWatchers();
+      resizeChapterFrame();
+      const doc = chapterFrame.contentDocument;
+      if (!doc || !doc.body) return;
+      if ('ResizeObserver' in window) {
+        frameResizeObserver = new ResizeObserver(resizeChapterFrame);
+        frameResizeObserver.observe(doc.body);
+        frameResizeObserver.observe(doc.documentElement);
+      }
+      frameMutationObserver = new MutationObserver(resizeChapterFrame);
+      frameMutationObserver.observe(doc.body, { childList: true, subtree: true, attributes: true });
+      frameResizeTimer = setInterval(resizeChapterFrame, 900);
+    }
+
+    function openChapter(index) {
+      const chapter = chapters[index];
+      if (!chapter) return;
+      const html = chapterHtml(chapter);
+      if (!html) return;
+      stopFrameResizeWatchers();
+      readerTitle.textContent = chapter.title;
+      readerMeta.textContent = chapter.author + ' \u00b7 ' + chapter.date + ' \u00b7 ' + chapter.replies + ' \u56de\u7b54 \u00b7 ' + chapter.views + ' \u70b9\u51fb';
+      readerBadge.textContent = chapter.label;
+      chapterFrame.style.height = '720px';
+      chapterFrame.onload = watchChapterFrame;
+      chapterFrame.srcdoc = html;
+      homeView.classList.add('hidden');
+      readerView.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeChapter() {
+      stopFrameResizeWatchers();
+      chapterFrame.onload = null;
+      chapterFrame.removeAttribute('srcdoc');
+      chapterFrame.style.height = '720px';
+      readerView.classList.remove('active');
+      homeView.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    passwordForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      if (passwordInput.value === PASSWORD) {
+        passwordScreen.classList.add('hidden');
+        document.body.classList.remove('locked');
+        passwordError.textContent = '';
+      } else {
+        passwordError.textContent = '\u5bc6\u7801\u4e0d\u6b63\u786e\u3002';
+        passwordInput.select();
+      }
+    });
+
+    topicList.addEventListener('click', function(event) {
+      const row = event.target.closest('[data-index]');
+      if (row) openChapter(Number(row.dataset.index));
+    });
+    statTriggers.forEach(function(button) {
+      button.addEventListener('click', function() {
+        openUsers(button.dataset.userGroup);
+      });
+    });
+    usersClose.addEventListener('click', closeUsers);
+    usersModal.addEventListener('click', function(event) {
+      if (event.target.hasAttribute('data-users-close')) closeUsers();
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && usersModal.classList.contains('active')) closeUsers();
+    });
+    backButton.addEventListener('click', closeChapter);
+    window.addEventListener('beforeunload', stopFrameResizeWatchers);
+
+    renderTopics();
+  </script>
 </body>
 </html>
