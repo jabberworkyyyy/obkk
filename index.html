@@ -101,15 +101,19 @@
   .stat-value { font-size: 25px; }
   .topic-toolbar { padding: 10px 14px; font-size: 12px; }
   .topic-toolbar span:last-child { display: none; }
-  .topic-row { grid-template-columns: 40px minmax(0, 1fr); gap: 11px; padding: 15px 14px; align-items: start; }
+  .topic-row { grid-template-columns: 40px repeat(3, minmax(0, 1fr)); gap: 9px; padding: 15px 14px; align-items: start; }
   .topic-avatar { width: 38px; height: 38px; font-size: 13px; }
+  .topic-main { grid-column: 2 / 5; }
   .topic-title { display: flex; flex-wrap: wrap; gap: 6px; }
   .topic-title strong { flex-basis: 100%; font-size: 16px !important; line-height: 1.42 !important; }
   .topic-meta { margin-top: 6px; }
   .topic-badge, .topic-tone { padding: 2px 7px; font-size: 11px !important; }
-  .topic-count, .topic-last { grid-column: 2; display: inline-flex; width: fit-content; margin: 0 6px 0 0; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.58); text-align: left; font-size: 12px !important; }
+  .topic-count, .topic-last { grid-column: auto; display: inline-flex; width: 100%; min-width: 0; margin: 0; padding: 4px 6px; border-radius: 999px; background: rgba(255,255,255,.58); text-align: center; justify-content: center; align-items: center; font-size: 11.5px !important; white-space: nowrap; }
+  .topic-replies { grid-column: 2; }
+  .topic-views { grid-column: 3; }
   .topic-count .topic-number { margin-right: 3px; font-size: 13px; }
-  .topic-last { display: block; width: auto; border-radius: 8px; line-height: 1.5 !important; }
+  .topic-last { grid-column: 4; display: inline-flex; border-radius: 999px; line-height: 1.35 !important; }
+  .topic-last br { display: none; }
   .reader-bar { grid-template-columns: 1fr auto; gap: 10px; padding: 12px 12px; position: sticky; top: 0; z-index: 10; }
   .back-button { grid-column: 1 / 3; width: 100%; min-height: 40px; }
   .reader-title h3 { font-size: 16px !important; }
@@ -2114,7 +2118,10 @@ function maybeStartTearLoop() {
     return;
   }
 
-  const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 4;
+  const bodyCanScroll = body.scrollHeight > body.clientHeight + 4;
+  const atBottom = bodyCanScroll
+    ? body.scrollTop + body.clientHeight >= body.scrollHeight - 4
+    : window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8;
   if (!atBottom) {
     clearTearTimer();
     page.classList.remove("tear-running");
@@ -2149,6 +2156,7 @@ function setEntry(target) {
 
 tabs.forEach((tab) => tab.addEventListener("click", () => setEntry(Number(tab.dataset.target))));
 bodies.forEach((body) => body.addEventListener("scroll", maybeStartTearLoop));
+window.addEventListener("scroll", maybeStartTearLoop, { passive: true });
 
 setEntry(0);
 </script>
@@ -2245,7 +2253,12 @@ setEntry(0);
     function decodeUtf8Base64(value) {
       const binary = atob(value);
       const bytes = Uint8Array.from(binary, function(char) { return char.charCodeAt(0); });
-      return new TextDecoder().decode(bytes);
+      if ('TextDecoder' in window) {
+        return new TextDecoder().decode(bytes);
+      }
+      return decodeURIComponent(Array.from(bytes, function(byte) {
+        return '%' + byte.toString(16).padStart(2, '0');
+      }).join(''));
     }
 
     function parseRegisteredUsers() {
@@ -2318,8 +2331,8 @@ setEntry(0);
         return '<button class="topic-row" type="button" data-index="' + index + '">' +
           '<span class="topic-avatar">' + String(index + 1).padStart(2, '0') + '</span>' +
           '<span class="topic-main"><span class="topic-title"><strong>' + escapeText(chapter.title) + '</strong><span class="topic-badge">' + escapeText(chapter.badge) + '</span><span class="topic-tone">' + escapeText(chapter.tone) + '</span></span><span class="topic-meta">' + escapeText(chapter.author) + ' \u00b7 \u53d1\u5e03\u4e8e ' + escapeText(chapter.date) + '</span></span>' +
-          '<span class="topic-count"><span class="topic-number">' + escapeText(chapter.replies) + '</span>\u56de\u7b54</span>' +
-          '<span class="topic-count"><span class="topic-number">' + escapeText(chapter.views) + '</span>\u70b9\u51fb</span>' +
+          '<span class="topic-count topic-replies"><span class="topic-number">' + escapeText(chapter.replies) + '</span>\u56de\u7b54</span>' +
+          '<span class="topic-count topic-views"><span class="topic-number">' + escapeText(chapter.views) + '</span>\u70b9\u51fb</span>' +
           '<span class="topic-last">\u6700\u540e\u6d3b\u52a8<br>' + escapeText(chapter.lastActive) + '</span></button>';
       }).join('');
     }
@@ -2359,7 +2372,7 @@ setEntry(0);
         return Math.max(bottom, rect.bottom + marginBottom);
       }, 0);
       const currentHeight = chapterFrame.getBoundingClientRect().height || 720;
-      const maxFrameHeight = window.matchMedia('(max-width: 720px)').matches ? 6400 : 2600;
+      const maxFrameHeight = window.matchMedia('(max-width: 720px)').matches ? 12000 : 2600;
       const nextHeight = Math.max(620, Math.min(maxFrameHeight, Math.ceil(contentBottom + 12)));
       if (Math.abs(nextHeight - currentHeight) > 18) {
         chapterFrame.style.height = nextHeight + 'px';
