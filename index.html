@@ -82,6 +82,53 @@
 .topic-meta, .topic-count, .topic-last, .reader-title p, .topic-badge, .topic-tone { font-size: 13px !important; line-height: 1.45 !important; }
 .reader-title h3 { font-size: 18px !important; line-height: 1.35 !important; }
 /* /combined-forum-frame-flow */
+
+/* mobile-responsive-pass */
+@media (max-width: 720px) {
+  body { background: #e9e4dc; }
+  .password-card { width: min(100%, 360px); padding: 24px 20px; }
+  .password-card h1 { font-size: 21px; line-height: 1.2; }
+  .password-row { grid-template-columns: 1fr; }
+  .password-row button { width: 100%; }
+  .forum-shell { width: 100%; margin: 0; }
+  .forum-board { border-left: 0; border-right: 0; box-shadow: none; }
+  .forum-header { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 20px 16px 16px; }
+  .forum-header h2 { font-size: 28px; line-height: 1.08; }
+  .forum-kicker { font-size: 11px; line-height: 1.45; }
+  .forum-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0; gap: 8px; }
+  .stat-box { min-height: 66px; padding: 10px 12px; }
+  .stat-label { font-size: 11px; line-height: 1.3; margin-bottom: 6px; }
+  .stat-value { font-size: 25px; }
+  .topic-toolbar { padding: 10px 14px; font-size: 12px; }
+  .topic-toolbar span:last-child { display: none; }
+  .topic-row { grid-template-columns: 40px minmax(0, 1fr); gap: 11px; padding: 15px 14px; align-items: start; }
+  .topic-avatar { width: 38px; height: 38px; font-size: 13px; }
+  .topic-title { display: flex; flex-wrap: wrap; gap: 6px; }
+  .topic-title strong { flex-basis: 100%; font-size: 16px !important; line-height: 1.42 !important; }
+  .topic-meta { margin-top: 6px; }
+  .topic-badge, .topic-tone { padding: 2px 7px; font-size: 11px !important; }
+  .topic-count, .topic-last { grid-column: 2; display: inline-flex; width: fit-content; margin: 0 6px 0 0; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.58); text-align: left; font-size: 12px !important; }
+  .topic-count .topic-number { margin-right: 3px; font-size: 13px; }
+  .topic-last { display: block; width: auto; border-radius: 8px; line-height: 1.5 !important; }
+  .reader-bar { grid-template-columns: 1fr auto; gap: 10px; padding: 12px 12px; position: sticky; top: 0; z-index: 10; }
+  .back-button { grid-column: 1 / 3; width: 100%; min-height: 40px; }
+  .reader-title h3 { font-size: 16px !important; }
+  .reader-title p { font-size: 12px !important; }
+  #readerBadge { align-self: start; }
+  .reader-frame-wrap { padding: 6px 0 0; background: #d7cfc4; }
+  .chapter-frame { border-left: 0; border-right: 0; height: 700px; }
+  .users-modal { align-items: end; padding: 0; }
+  .users-panel { width: 100%; max-height: 84vh; border-radius: 16px 16px 0 0; border-left: 0; border-right: 0; border-bottom: 0; }
+  .users-panel-head { padding: 18px 16px 13px; }
+  .users-panel h3 { font-size: 20px; }
+  .users-list { max-height: calc(84vh - 86px); padding: 12px; }
+  .user-card { grid-template-columns: 42px minmax(0, 1fr); gap: 11px; padding: 12px; }
+  .user-avatar { width: 42px; height: 42px; font-size: 21px; }
+  .user-name { font-size: 15px; gap: 6px; }
+  .user-nickname { font-size: 12px; padding: 1px 7px; }
+  .user-note { font-size: 13.5px; line-height: 1.68; }
+}
+/* /mobile-responsive-pass */
 </style>
 </head>
 <body class="locked">
@@ -133,6 +180,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC"
 .item-name, .reviewer-name, .comment-username { font-weight: 700 !important; }
 .detail-title, .comments-title { font-size: 17px !important; line-height: 1.35 !important; }
 .hero-name { font-size: 20px !important; line-height: 1.35 !important; }
+@media (max-width: 720px) {
+body { max-width: none !important; padding: 12px 10px 26px !important; font-size: 14.5px !important; }
+.score-list { gap: 9px !important; }
+.score-item { display: grid !important; grid-template-columns: 46px minmax(0, 1fr) auto !important; gap: 10px !important; padding: 12px !important; align-items: center !important; }
+.square-box { width: 46px !important; height: 46px !important; border-radius: 8px !important; }
+.item-desc { text-align: left !important; font-size: 14px !important; line-height: 1.55 !important; padding: 0 !important; }
+.item-right { min-width: 64px !important; }
+.item-name { font-size: 12px !important; }
+.item-score { font-size: 15px !important; }
+.item-score .score-num { font-size: 18px !important; }
+.detail-header { position: sticky !important; top: 0 !important; z-index: 8 !important; background: var(--bg-primary) !important; padding-top: 8px !important; }
+.detail-hero { padding: 16px 10px 18px !important; }
+.hero-square { width: 62px !important; height: 62px !important; font-size: 32px !important; }
+.hero-score { font-size: 30px !important; }
+.star-distribution { max-width: none !important; }
+.comment-item { padding: 12px !important; }
+.comment-header { align-items: flex-start !important; gap: 8px !important; }
+.comment-actions { gap: 14px !important; flex-wrap: wrap !important; }
+#reviewers-overlay { align-items: flex-end !important; padding: 0 !important; }
+.reviewers-modal { width: 100% !important; max-height: 82vh !important; border-radius: 16px 16px 0 0 !important; padding: 18px 16px 16px !important; }
+}
 /* /combined-forum-typography */
 </style></head><body><div id="reviewers-overlay"><div class="reviewers-modal"><div class="reviewers-header"><h3>👥 五位热情评委</h3><button class="reviewers-close" id="reviewers-close-btn">✕</button></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#c4a88a;">🐱</div><div class="reviewer-info"><div class="reviewer-name">仔土</div><div class="reviewer-style">青涩、真诚、带着忐忑的珍视</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#b8957a;">💅</div><div class="reviewer-info"><div class="reviewer-name">阿飞</div><div class="reviewer-style">人家只是喜欢看前辈崩溃样子的女高中生啦</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#8a7a8a;">🍆</div><div class="reviewer-info"><div class="reviewer-name">紫袍</div><div class="reviewer-style">会享受卡卡西在性爱中自我惩罚的一面</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#b57a6a;">😤</div><div class="reviewer-info"><div class="reviewer-name">暴怒小孩</div><div class="reviewer-style">用愤怒掩盖渴望，想要让他幸福，却总是选了错误的选项</div></div></div><div class="reviewer-row"><div class="reviewer-avatar" style="background:#8aa8a0;">☃</div><div class="reviewer-info"><div class="reviewer-name">战犯人夫</div><div class="reviewer-style">温柔、细腻、带着赎罪和感恩的爱</div></div></div></div></div><!-- ===== LIST PAGE ===== --><div id="listPage" class="list-page"><div class="header"><div class="header-left"><span class="back-btn">‹</span><span class="header-title">🍳 咔咔吸炒菜评分榜</span></div><div class="header-right"><span class="header-icon">⋮</span></div></div><div class="sub-header"><div class="sub-header-tabs"><span class="tab-item active">综合排序</span><span class="tab-item" id="tab-top-rated">评分最高</span><span class="tab-item" id="tab-reviewers">评分人数</span></div><div class="filter-btn">筛选 ∨</div></div><div class="score-list" id="scoreList"><!-- 由 JS 动态生成 --></div></div><!-- ===== DETAIL PAGE ===== --><div id="detailPage" class="detail-page"><div class="detail-header"><span class="detail-back" id="detailBack">‹</span><span class="detail-title" id="detailTitle">详情</span></div><div class="detail-hero" id="detailHero"><div class="hero-square" id="heroSquare">🐶</div><div class="hero-name" id="heroName">仔卡</div><div class="hero-score"><span class="hero-score-num" id="heroScoreNum">9.2</span><span class="hero-score-total">/10</span></div><div class="hero-review-count" id="heroReviewCount">共 5 条评分</div><div class="hero-stars-row" id="heroStarsRow"></div><div class="star-distribution" id="starDistribution"></div></div><div class="comments-section"><div class="comments-title">评分详情</div><div id="commentsList"></div></div></div><script>
 var kakashiData = [
@@ -867,6 +935,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC"
 .ao3-comment-speaker strong { font-size: 14px !important; line-height: 1.35 !important; }
 .ao3-actions, .ao3-participant-trigger small, .ao3-participant-row small, .ao3-rank-footer { font-size: 13px !important; line-height: 1.55 !important; }
 .ao3-rank-number { font-size: 13px !important; }
+@media (max-width: 720px) {
+body { padding: 10px !important; font-size: 14.5px !important; }
+.forum-page, .forum-shell, .forum-window, .forum-main { width: 100% !important; min-width: 0 !important; overflow: visible !important; }
+.ao3-score-app { padding: 0 !important; }
+.ao3-rank-card { border-radius: 8px !important; box-shadow: none !important; }
+.ao3-participant-trigger { min-height: 48px !important; padding: 11px 12px !important; }
+.ao3-rank-list { gap: 10px !important; }
+.ao3-rank-item { display: grid !important; grid-template-columns: 36px minmax(0, 1fr) !important; gap: 10px !important; padding: 12px !important; }
+.ao3-rank-number { width: 34px !important; height: 34px !important; }
+.ao3-rank-info strong { font-size: 15px !important; }
+.ao3-rank-info p { font-size: 13.5px !important; line-height: 1.58 !important; }
+.ao3-rank-score { grid-column: 2 !important; justify-self: start !important; margin-top: 4px !important; }
+.ao3-rank-detail { grid-column: 1 / -1 !important; }
+.ao3-rank-detail summary { min-height: 42px !important; padding: 10px 12px !important; }
+.ao3-detail-dialog, .ao3-rank-detail blockquote { padding: 12px !important; font-size: 14.5px !important; }
+.ao3-comment { padding: 12px !important; }
+.ao3-comment-head { gap: 8px !important; }
+.ao3-actions { flex-wrap: wrap !important; gap: 12px !important; }
+.ao3-participant-modal { align-items: flex-end !important; padding: 0 !important; }
+.ao3-participant-panel { width: 100% !important; max-height: 82vh !important; border-radius: 16px 16px 0 0 !important; padding: 18px 16px !important; }
+}
 /* /combined-forum-typography */
 </style>
 </head>
@@ -1030,7 +1119,7 @@ if (participantTrigger && participantModal && participantClose) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>角色观测档案</title>
 <style>
-:root{--bg:#eee9df;--paper:#fbfaf6;--ink:#3e3832;--muted:#82786c;--line:#ded4c6;--tab:#b99072;--sage:#9ca58f;--rose:#b78382;--gold:#b9a267;--shadow:0 18px 44px rgba(72,56,43,.14)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#ece6dc,#f6f2eb);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.72}.dossier-app{max-width:1040px;margin:0 auto;padding:28px 18px 40px}.topbar{display:none}.folder-shell{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:18px;align-items:start}.book{min-height:720px;position:relative}.page{display:none;background:var(--paper);border-radius:8px;box-shadow:var(--shadow);padding:28px;min-height:720px}.page.active{display:block}.stamp-row{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:18px}.stamp{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#f3eee7}.file-title{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.file-title h2{margin:0 0 6px;font-size:24px;line-height:1.25}.file-title p{margin:0;color:var(--muted);font-size:13px}.badge{min-width:72px;text-align:center;border-radius:8px;background:#ece3d6;padding:8px 10px;color:var(--muted)}.badge span{display:block;font-size:11px}.badge strong{display:block;color:var(--ink);font-size:20px}.record-sheet{max-height:560px;overflow:auto;padding-right:8px}.module-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.module{background:#fffdf9;border-radius:8px;padding:14px;border-left:5px solid var(--sage)}.module:nth-child(2){border-left-color:var(--tab)}.module:nth-child(3){border-left-color:var(--rose)}.module:nth-child(4){border-left-color:var(--gold)}.module.wide{grid-column:span 2}.module-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}.module-head h3{font-size:15px;margin:0}.module-code{font-size:11px;color:var(--muted);letter-spacing:.06em}.module-body p{margin:0 0 10px}.module-body p:last-child{margin-bottom:0}.rating-line{display:flex;align-items:center;gap:12px;margin-bottom:10px}.meter{height:8px;flex:1;border-radius:99px;background:#ded8ce;overflow:hidden}.meter i{display:block;height:100%;background:linear-gradient(90deg,#a0aa92,#bba06d)}.stars{white-space:nowrap;color:#a98745}.empty{color:#d3cabd}.page-footer{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}.tabs{display:flex;flex-direction:column;gap:8px;position:sticky;top:16px}.tab{border:0;border-radius:8px;background:#f8f5ef;color:var(--muted);padding:10px 12px;text-align:left;font:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(74,60,45,.08)}.tab.active{background:#8b7568;color:#fff}.controls{display:none}@media(max-width:760px){.folder-shell{grid-template-columns:1fr}.tabs{position:static;display:grid;grid-template-columns:repeat(4,1fr)}.module-grid{grid-template-columns:1fr}.module.wide{grid-column:auto}.page{padding:20px}.file-title{flex-direction:column}.record-sheet{max-height:62vh}}
+:root{--bg:#eee9df;--paper:#fbfaf6;--ink:#3e3832;--muted:#82786c;--line:#ded4c6;--tab:#b99072;--sage:#9ca58f;--rose:#b78382;--gold:#b9a267;--shadow:0 18px 44px rgba(72,56,43,.14)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#ece6dc,#f6f2eb);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.72}.dossier-app{max-width:1040px;margin:0 auto;padding:28px 18px 40px}.topbar{display:none}.folder-shell{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:18px;align-items:start}.book{min-height:720px;position:relative}.page{display:none;background:var(--paper);border-radius:8px;box-shadow:var(--shadow);padding:28px;min-height:720px}.page.active{display:block}.stamp-row{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:18px}.stamp{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#f3eee7}.file-title{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.file-title h2{margin:0 0 6px;font-size:24px;line-height:1.25}.file-title p{margin:0;color:var(--muted);font-size:13px}.badge{min-width:72px;text-align:center;border-radius:8px;background:#ece3d6;padding:8px 10px;color:var(--muted)}.badge span{display:block;font-size:11px}.badge strong{display:block;color:var(--ink);font-size:20px}.record-sheet{max-height:560px;overflow:auto;padding-right:8px}.module-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.module{background:#fffdf9;border-radius:8px;padding:14px;border-left:5px solid var(--sage)}.module:nth-child(2){border-left-color:var(--tab)}.module:nth-child(3){border-left-color:var(--rose)}.module:nth-child(4){border-left-color:var(--gold)}.module.wide{grid-column:span 2}.module-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}.module-head h3{font-size:15px;margin:0}.module-code{font-size:11px;color:var(--muted);letter-spacing:.06em}.module-body p{margin:0 0 10px}.module-body p:last-child{margin-bottom:0}.rating-line{display:flex;align-items:center;gap:12px;margin-bottom:10px}.meter{height:8px;flex:1;border-radius:99px;background:#ded8ce;overflow:hidden}.meter i{display:block;height:100%;background:linear-gradient(90deg,#a0aa92,#bba06d)}.stars{white-space:nowrap;color:#a98745}.empty{color:#d3cabd}.page-footer{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}.tabs{display:flex;flex-direction:column;gap:8px;position:sticky;top:16px}.tab{border:0;border-radius:8px;background:#f8f5ef;color:var(--muted);padding:10px 12px;text-align:left;font:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(74,60,45,.08)}.tab.active{background:#8b7568;color:#fff}.controls{display:none}@media(max-width:760px){.folder-shell{grid-template-columns:1fr}.tabs{position:static;display:grid;grid-template-columns:repeat(4,1fr)}.module-grid{grid-template-columns:1fr}.module.wide{grid-column:auto}.page{padding:20px}.file-title{flex-direction:column}.record-sheet{max-height:62vh}}@media(max-width:720px){body{font-size:14.5px;line-height:1.68}.dossier-app{padding:10px 8px 24px}.folder-shell{gap:10px}.book{min-height:0}.page{min-height:0;padding:14px 12px;border-radius:8px;box-shadow:none}.stamp-row{gap:8px;align-items:flex-start;font-size:10.5px;letter-spacing:.04em;margin-bottom:12px;padding-bottom:9px}.stamp{padding:2px 8px}.file-title{gap:10px;margin-bottom:12px}.file-title h2{font-size:20px}.file-title p{font-size:12px;line-height:1.45}.badge{min-width:58px;padding:6px 8px}.record-sheet{max-height:68vh;padding-right:4px}.module-grid{gap:10px}.module{padding:12px;border-left-width:4px}.module-head{display:block;padding-bottom:7px;margin-bottom:8px}.module-head h3{font-size:14.5px}.module-code{display:block;margin-top:3px;font-size:10px}.rating-line{gap:8px}.page-footer{font-size:11px}.tabs{display:flex;flex-direction:row;overflow-x:auto;gap:7px;padding:0 2px 4px;scroll-snap-type:x mandatory}.tab{flex:0 0 auto;min-width:66px;text-align:center;padding:9px 10px;scroll-snap-align:start}}
 </style>
 </head>
 <body>
@@ -1706,6 +1795,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC"
 .diary-tab strong, .diary-index-head strong { font-size: 15px !important; line-height: 1.35 !important; font-style: normal !important; }
 .diary-body { font-family: Georgia, "Times New Roman", "Kaiti SC", "KaiTi", serif !important; font-size: 17px !important; line-height: 1.92 !important; font-style: italic !important; }
 .diary-body .outline-line { font-size: 15px !important; line-height: 1.72 !important; }
+@media (max-width: 720px) {
+body { background: var(--bg) !important; }
+.diary-app { width: 100% !important; min-height: 0 !important; padding: 8px 8px 22px !important; }
+.notebook-shell { padding: 8px !important; border-radius: 8px !important; box-shadow: none !important; }
+.notebook { display: grid !important; grid-template-columns: 1fr !important; height: auto !important; min-height: 0 !important; border-radius: 6px !important; overflow: visible !important; }
+.diary-index { display: flex !important; flex-direction: row !important; overflow-x: auto !important; gap: 7px !important; padding: 10px !important; border-right: 0 !important; border-bottom: 1px solid var(--line) !important; scroll-snap-type: x mandatory !important; }
+.diary-index-head { flex: 0 0 154px !important; margin: 0 !important; padding-right: 4px !important; }
+.diary-index-head strong { font-size: 14px !important; }
+.diary-tab { flex: 0 0 92px !important; min-height: 58px !important; padding: 8px 9px !important; scroll-snap-align: start !important; border-radius: 8px !important; }
+.diary-tab:hover, .diary-tab:focus-visible { transform: none !important; }
+.diary-tab-day { font-size: 11px !important; }
+.diary-tab strong { display: block !important; max-width: 100% !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.diary-tab-meta { display: block !important; max-width: 100% !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-size: 11px !important; }
+.diary-page-wrap { min-height: 0 !important; }
+.diary-page-wrap::before { left: 24px !important; opacity: .45 !important; }
+.diary-page { height: min(78vh, 680px) !important; min-height: 560px !important; padding: 18px 16px 16px 34px !important; gap: 12px !important; }
+.diary-paper-head { grid-template-columns: 1fr !important; gap: 10px !important; }
+.diary-page h2 { font-size: 19px !important; line-height: 1.28 !important; }
+.weather-card { justify-content: flex-start !important; gap: 10px !important; padding: 8px 10px !important; }
+.diary-body { font-size: 15.5px !important; line-height: 1.86 !important; padding: 0 6px 0 0 !important; }
+.diary-body .outline-line { font-size: 14px !important; line-height: 1.66 !important; }
+.diary-footer { font-size: 12px !important; }
+.tear-effect { transform: scale(.88) !important; transform-origin: bottom right !important; }
+}
 /* /combined-forum-typography */
 </style>
 </head>
