@@ -532,7 +532,7 @@
           <h1>刀剑易得，真心难求</h1>
         </div>
         <nav class="progress-list" id="progressList"></nav>
-        <p class="status-card" id="statusText"></p>
+        <p class="status-card" id="statusText">选择正确路线后，会解锁下一章节。</p>
       </aside>
 
       <section class="story-panel">
@@ -801,7 +801,7 @@
                   "“……你还愿意如同当年那般教我，好不好？教我怎样对你好，怎样爱你。我这些年学会了活下去，学会了杀人，唯独不知道要如何爱你，只知道笨拙地把你关起来，我本想把那些江湖纷扰与你隔绝，最后却害你成了这般模样。”",
                   "“我愿意的。”卡卡西急促地打断他，“不要再说了……我愿意的，带土，我从前活着时也如同行尸走肉，直到见到了你，才仿佛又活过来了一般。带土从来都是我的英雄，所以不要那样再说自己了。”",
                   "“如今我做夫君的炉鼎，即使这副身子再也不能握剑、替你分忧，对你也是心甘情愿，别无二心。”",
-                  "听到这番话，宇智波带土感动万分，无比欢喜在如此久的分别之后，竟仍然与道侣心意相通。不过，他也反应过来，自己似乎还有一件重要的事（重要的事为蓝色+下划线，点击后弹出窗口：宇智波带土虽然对卡卡西如此不珍惜自己身体的行径痛心不已，但好在他也曾读过那几本禁书，他还没有来得及告诉卡卡西的是：此法实际上并非完全无解，相较寻常炉鼎之法反而对人本身的伤害更轻，甚至受术之人可以反哺回炉鼎，只因需要一份绝无二心的爱。刀剑易得，真心难求，这恰恰是如今江湖世道中最难得的事物，因此才被束之高阁，被当作洪水猛兽一样对待。）没有告诉卡卡西……但此刻美人在怀，心意相通，难得看到这副模样的卡卡西，带土已无暇去想其他的事。",
+                  "听到这番话，宇智波带土感动万分，无比欢喜再次与他的道侣心意相同。不过，他也反应过来，自己似乎还有一件重要的事（重要的事为蓝色+下划线，点击后弹出窗口：宇智波带土虽然对卡卡西如此不珍惜自己身体的行径痛心不已，但好在他也曾读过那几本禁书，他还没有来得及告诉卡卡西的是：此法实际上并非完全无解，相较寻常炉鼎之法反而对人本身的伤害更轻，甚至受术之人可以反哺回炉鼎，只因需要一份绝无二心的爱。刀剑易得，真心难求，这恰恰是如今江湖世道中最难得的事物，因此才被束之高阁，被当作洪水猛兽一样对待。）没有告诉卡卡西……但此刻美人在怀，心意相通，难得看到这副模样的卡卡西，带土已无暇去想其他的事。",
                   "此刻他心中无限柔情，只愿轻轻拥吻怀中爱人。"
             ],
             "choices": [
@@ -961,8 +961,8 @@
         chapter.choices.map(function(choice) {
           return '<button class="choice-button" type="button" data-choice="' + choice.key + '"><b>' + choice.key + '</b>' + escapeHtml(choice.label) + '</button>';
         }).join("") +
-        '</div><div class="result-panel" id="resultPanel"></div></section>' : '');
-      statusText.textContent = "";
+        '</div><div class="result-panel" id="resultPanel"></div></section>' : '<section class="choice-area"><p class="choice-title">完结</p><div class="result-panel is-visible"><div class="result-body">' + renderParagraph('【本章文本已到达完结章节】') + '</div></div></section>');
+      statusText.textContent = "当前：" + chapter.title + "。选对后继续，选错后进入结局页。";
       renderProgress();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -977,8 +977,12 @@
         '<header class="chapter-top"><div><h2 class="chapter-title">结局</h2></div></header>' +
         '<section class="story-scroll" data-story-reader><div class="story-block">' +
         (finalLines.length ? finalLines.map(renderParagraph).join("") : renderParagraph('【结局文本占位符】')) +
-        '</div></section>';
-      statusText.textContent = "";
+        '</div></section>' +
+        '<section class="choice-area"><p class="choice-title">完结</p><div class="result-panel is-visible"><div class="result-body"><p><button class="reset-button" type="button" id="resetEnding">回到本节选择</button></p></div></div></section>';
+      document.getElementById("resetEnding").addEventListener("click", function() {
+        renderChapter(current);
+      });
+      statusText.textContent = "已进入最终结局。";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
